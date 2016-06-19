@@ -1,0 +1,125 @@
+@model Ayatta.Model.ViewModel
+<!DOCTYPE html>
+    <!--[if IE 9 ]><html class="ie9"><![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Material Admin</title>
+    
+        <!-- Vendor CSS -->
+        <link href="/assets/stylesheets/animate.min.css" rel="stylesheet">
+        <link href="/assets/stylesheets/sweet-alert.css" rel="stylesheet">
+        <link href="/assets/stylesheets/material-design-iconic-font.min.css" rel="stylesheet">
+        <link href="/assets/stylesheets/malihu-custom-scrollbar.min.css" rel="stylesheet">
+        <link href="/assets/stylesheets/bootstrap-select.min.css" rel="stylesheet">
+    
+        @RenderSection("css", required: false)    
+        <!-- CSS -->
+        <link href="/assets/stylesheets/material.css" rel="stylesheet">
+        @RenderSection("cssOmega", required: false)    
+    </head>
+    
+    <body>
+        
+        
+        <section id="main">
+            
+        
+        
+            <section id="content">
+                @RenderBody()
+                
+            </section>
+        </section>
+        
+        <footer id="footer">
+            Copyright &copy; 2015 Material Admin
+            
+            <ul class="f-menu">
+                <li><a href="">Home</a></li>
+                <li><a href="">Dashboard</a></li>
+                <li><a href="">Reports</a></li>
+                <li><a href="">Support</a></li>
+                <li><a href="">Contact</a></li>
+            </ul>
+        </footer>
+
+        <!-- Page Loader -->
+        <div class="page-loader">
+            <div class="preloader pls-blue">
+                <svg class="pl-circular" viewBox="25 25 50 50">
+                    <circle class="plc-path" cx="50" cy="50" r="20" />
+                </svg>
+
+                <p>Please wait...</p>
+            </div>
+        </div>
+
+        <!-- Older IE warning message -->
+        <!--[if lt IE 9]>
+            <div class="ie-warning">
+                <h1 class="c-white">Warning!!</h1>
+                <p>You are using an outdated version of Internet Explorer, please upgrade <br/>to any of the following web browsers to access this website.</p>
+                <div class="iew-container">
+                    <ul class="iew-download">
+                        <li>
+                            <a href="http://www.google.com/chrome/">
+                                <img src="img/browsers/chrome.png" alt="">
+                                <div>Chrome</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.mozilla.org/en-US/firefox/new/">
+                                <img src="img/browsers/firefox.png" alt="">
+                                <div>Firefox</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="http://www.opera.com">
+                                <img src="img/browsers/opera.png" alt="">
+                                <div>Opera</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.apple.com/safari/">
+                                <img src="img/browsers/safari.png" alt="">
+                                <div>Safari</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie">
+                                <img src="img/browsers/ie.png" alt="">
+                                <div>IE (New)</div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <p>Sorry for the inconvenience!</p>
+            </div>   
+        <![endif]-->
+
+        <!-- Javascript Libraries -->
+        <script src="/assets/javascripts/lodash.min.js"></script>
+        <script src="/assets/javascripts/jquery.min.js"></script>
+        <script src="/assets/javascripts/jquery.extend.js"></script>
+        <script src="/assets/javascripts/waves.min.js"></script>        
+        <script src="/assets/javascripts/sweet-alert.min.js"></script>
+        <script src="/assets/javascripts/bootstrap.min.js"></script>
+        <script src="/assets/javascripts/bootstrap-growl.min.js"></script>
+        <script src="/assets/javascripts/bootstrap-select.min.js"></script>
+        
+        <script src="/assets/javascripts/malihu-custom-scrollbar.min.js"></script>        
+
+        <!-- Placeholder for IE9 -->
+        <!--[if IE 9 ]>
+            <script src="vendors/bower_components/jquery-placeholder/jquery.placeholder.min.js"></script>
+        <![endif]-->
+        @RenderSection("js", required: false)
+        <script src="/assets/javascripts/app.global.js"></script>       
+      
+        @RenderSection("jsOmega", required: false) 
+        <script src="/assets/javascripts/functions.js"></script>
+        <script src="/assets/javascripts/demo.js"></script> 
+    </body>
+</html>

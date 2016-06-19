@@ -1,0 +1,162 @@
+﻿@model HomeModel.Index
+<div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="item-detail clearfix">
+                    <div>
+                        <div class="item-detail-property">
+                            <div class="item-detail-property-wrap">
+                                <div class="property">
+                                    <h4>
+                                        @(Model.Item.Name)
+                                    </h4>
+                                    <h4 style="color: #e4393c">
+                                        @(Model.Item.Name)
+                                    </h4>
+                                    <div class="item-meta">
+                                        <p>
+                                            价格：<span id="price" class="item-price">@Model.Item.Price</span>
+                                        </p>
+                                    </div>
+                                    <div class="item-sku">
+                                        <dl class="dl-horizontal">
+                                            @if (Model.Item != null)
+                                            {
+                                                 @foreach (var o in Model.Item.SkuProps)
+                {                   
+                    <dt>@(o.Key) :</dt>
+                    <dd>
+                        <ul class="list-inline">
+                        @foreach (var v in o.Value)
+                        {
+                            <li class="item-sku-prop" data-value="@(v.Key)">
+                                @if (Model.Item.PropImgs.ContainsKey(v.Key))
+                                {
+                                    var img =Model.Item.PropImgs[v.Key];
+                                    <a class="item-sku-prop-img zoom" href="javascript:void(0);" style="background: #FFFFFF url('') no-repeat scroll center center ;" >
+                                        <span>&nbsp;&nbsp;&nbsp;</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="javascript:void(0);" title="@(v.Value)"><span>@(v.Value)</span></a>
+                                }
+                                <i></i>
+                            </li>
+                        }
+                        </ul>
+                    </dd>
+                }
+                                                <dt>数 量：</dt>
+                                                <dd>
+                                                    <div style="width: 100px; position: relative;">
+                                                        <div class="input-group">
+                                                            <span class="input-group-addon"><i class="glyphicon glyphicon-minus"></i></span>
+                                                            <input id="item-quantity" class="form-control" type="text" title="请输入购买量" maxlength="3"
+                                                                   value="1" onkeyup="this.value=this.value.replace(/\D/g,'');" />
+                                                            <span class="input-group-addon"><i class="glyphicon glyphicon-plus"></i></span>
+                                                        </div>
+                                                        <div class="text-danger" style="position: absolute; left: 110px; top: 8px; display: block;
+                                                            width: 100%;">
+                                                            库存(<span id="item-stock">@(Model.Item.Stock)</span>)
+                                                        </div>
+                                                    </div>
+                                                </dd>
+                                            }
+                                        </dl>
+                                        <ul class="unstyled item-action">
+                                            <li class="item-action-buy"><a href="javascript:void(0);"></a></li>
+                                            <li class="item-action-add"><a href="javascript:void(0);"></a></li>
+                                        </ul>
+                                        <p>
+                                            ss
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="item-detail-gallery">
+                            <div class="item-brand">
+                                <strong>@(Model.Item.BrandName)</strong>
+                            </div>
+                            <div class="gallery">
+                                <div class="picture">
+                                    <img id="zoom" src="@(Model.Item.Picture)"
+                                         data-zoom-image="@(Model.Item.Picture)"
+                                         alt="@(Model.Item.Name)" />
+                                    <div class="zoom-icon">
+                                    </div>
+                                </div>
+                                <div class="gallery-zoom">
+                                    <div id="gallery-zoom-thumb" class='gallery-zoom-thumb'>
+                                        
+                                    </div>
+                                   
+                                </div>
+                                <div class="action">
+                                    <div class="placeholder">
+                                        asdfasf
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ald-skuRight" class="ald-skuRight ald ald-03054">
+                        <div class="ald-inner ">
+                            <div class="ald-hd">
+                                <s></s><span>看了又看</span>
+                            </div>
+                            <div class="ald-carousel">
+                                <div class="wrapCon">
+                                </div>
+                                <ul class="ald-switchable-trigger">
+                                    <li class="ald-switchable-prev-btn">上一个</li>
+                                    <li class="ald-switchable-next-btn">下一个</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+            </div>
+            <div class="col-md-10">
+                <div style="margin-top: 10px;">
+                    <div class="item-attr">
+                        <div class="item-attr-brand">
+                        </div>
+                        <ul class="item-attr-list unstyled clearfix">
+                           @foreach (var text in Model.Item.PropTexts)
+                            {
+                                <li>@Html.Raw(text) </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@section cssOmega{
+    <link type="text/css" href="http://static.ayatta.com/css/app.item.css?v=1605151240" rel="stylesheet" />
+}
+@section js{
+    <script type="text/javascript" src="http://static.ayatta.com/js/jquery.slides.min.js?v=1605151240" ></script>
+    <script type="text/javascript" src="http://static.ayatta.com/js/jquery.elevatezoom.js?v=1605151240" ></script>
+}
+@section jsOmega{
+    <script src="/assets/javascripts/app/item.js"></script>    
+    <script>
+        @{
+            var data=new{
+                id=Model.Item.Id,
+                price=Model.Item.Price,
+                stock=Model.Item.Stock,
+                propCount=Model.Item.SkuProps.Count,
+                skus= Model.Item.Skus.ToDictionary(o => o.PropId, o => new { id = o.Id,price = o.Price, count = o.Stock })                
+            };
+        }
+        ayatta.item.bind(@Html.Json(data));
+    </script>    
+}

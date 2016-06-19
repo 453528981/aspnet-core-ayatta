@@ -1,0 +1,1317 @@
+﻿using System;
+using System.Linq;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+
+namespace Ayatta.Domain
+{
+    /// <summary>
+    /// 促销 http://bbs.taobao.com/catalog/thread/16543510-264265243.htm
+    /// </summary>
+    public abstract class Promotion : BaseEntity<int>
+    {
+        #region Base
+        /// <summary>
+        /// 促销类型
+        /// </summary>
+        public enum Category : byte
+        {
+            None = 0,
+            /// <summary>
+            /// 店铺优惠
+            /// </summary>
+            A = 1,
+            /// <summary>
+            /// 搭配组合套餐
+            /// </summary>
+            B,
+            /// <summary>
+            /// 限购
+            /// </summary>
+            C,
+            /// <summary>
+            /// 特价
+            /// </summary>
+            D,
+            /// <summary>
+            /// 购物车促销
+            /// </summary>
+            E
+        }
+
+        /// <summary>
+        /// 标题
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// 名称
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 开始时间
+        /// </summary>
+        public DateTime StartOn { get; set; }
+
+        /// <summary>
+        /// 结束时间
+        /// </summary>
+        public DateTime StopOn { get; set; }
+
+        /// <summary>
+        /// 适用平台
+        /// </summary>
+        public Plateform Plateform { get; set; }
+
+        /// <summary>
+        /// 卖家Id
+        /// </summary>
+        public int SellerId { get; set; }
+
+        /// <summary>
+        /// 状态
+        /// </summary>
+        public bool Status { get; set; }
+
+        /// <summary>
+        /// 判断活动是否有效
+        /// </summary>
+        /// <returns></returns>
+        public virtual bool IsValid()
+        {
+            var now = DateTime.Now;
+            return Status && StartOn < now && now < StopOn;
+        }
+        #endregion
+
+        #region 店铺优惠
+        /// <summary>
+        /// 店铺优惠 http://bbs.taobao.com/catalog/thread/16543510-264269834.htm
+        /// </summary>
+        public class Default : Promotion
+        {
+            /// <summary>
+            /// 适用于(全场店铺)所有商品
+            /// </summary>
+            public bool Global { get; set; }
+
+            /// <summary>
+            /// true为满件折 false为满元减
+            /// </summary>
+            public bool Discount { get; set; }
+
+            /// <summary>
+            /// 用户参与活动限制
+            /// </summary>
+            public Enum.Limit Limit { get; set; }
+
+            /// <summary>
+            /// 用户参与活动限制值 Limit为true时有效
+            /// </summary>
+            public int LimitValue { get; set; }
+
+            /// <summary>
+            /// 提前预热天数
+            /// </summary>
+            public int WarmUp { get; set; }
+
+            /// <summary>
+            /// 标准版 活动图片
+            /// </summary>
+            public string Picture { get; set; }
+
+            /// <summary>
+            /// 豪华版 专辑地址
+            /// </summary>
+            public string ExternalUrl { get; set; }
+
+            /// <summary>
+            /// 上不封顶(当规则为满元减且只有一级时 该值可为true)
+            /// </summary>
+            public bool Infinite { get; set; }
+
+            /// <summary>
+            /// 活动商品 Global==false时为包含的商品(以','分隔)
+            /// </summary>
+            public string ItemData { get; set; }
+
+            /// <summary>
+            /// 优惠规则 Json格式
+            /// </summary>
+            public string RuleData { get; set; }
+
+            /// <summary>
+            /// 活动商品
+            /// </summary>
+            public IList<int> Items
+            {
+                get
+                {
+                    if (!string.IsNullOrEmpty(ItemData))
+                    {
+                        return Array.ConvertAll(ItemData.Split(','), int.Parse).ToList();
+                    }
+                    return new List<int>(0);
+                }
+            }
+
+            /// <summary>
+            /// 优惠规则 
+            /// </summary>
+            public IList<Rule> Rules
+            {
+                get
+                {
+                    if (string.IsNullOrEmpty(RuleData)) return null;
+                    try
+                    {
+                        return JsonConvert.DeserializeObject<IList<Rule>>(RuleData);
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+                }
+            }
+
+            public string TimeText
+            {
+                get
+                {
+                    var span = StopOn.Subtract(StartOn);
+                    return string.Format("活动持续：{0}天 {1}小时 {2}分 {3}秒", span.Days, span.Hours, span.Minutes, span.Seconds);
+                }
+            }
+            public string StatusText
+            {
+                get
+                {
+                    if (!Status) return "已暂停";
+                    if (DateTime.Now >= StartOn && DateTime.Now < StopOn)
+                    {
+                        return "进行中";
+                    }
+                    return DateTime.Now > StopOn ? "已结束" : "未开始";
+                }
+            }
+
+            /// <summary>
+            /// 判断活动是否有效
+            /// </summary>
+            /// <returns></returns>
+            public override bool IsValid()
+            {
+                return base.IsValid() && Rules != null && Rules.Any();
+            }
+
+            /// <summary>
+            /// 匹配规则
+            /// </summary>
+            /// <param name="amount">订单商品总金额小计</param>
+            /// <param name="quantity">订单商品总数</param>
+            /// <returns></returns>
+            public Rule MatchRule(decimal amount, int quantity)
+            {
+                if (!IsValid()) return null;
+                var list = Rules.OrderByDescending(x => x.Upon);
+                return Discount ? list.FirstOrDefault(o => quantity >= o.Value) : list.FirstOrDefault(o => amount >= o.Value);
+            }
+            public static IDictionary<int, string> WarmUpDic
+            {
+                get
+                {
+                    var dic = new Dictionary<int, string>();
+                    dic.Add(0, "无");
+                    dic.Add(1, "提前1天");
+                    dic.Add(2, "提前2天");
+                    dic.Add(3, "提前3天");
+                    dic.Add(4, "提前4天");
+                    dic.Add(5, "提前5天");
+                    return dic;
+                }
+            }
+
+            #region
+            /// <summary>
+            /// 规则
+            /// </summary>
+            public class Rule
+            {
+                /// <summary>
+                /// 临界值
+                /// </summary>
+                public decimal Upon { get; set; }
+
+                /// <summary>
+                /// 满减/满折值
+                /// </summary>
+                public decimal Value { get; set; }
+
+                /// <summary>
+                /// 包邮 值为null时不包邮 值为*时所有地区都包邮 不为null和*时为不包邮地区
+                /// </summary>
+                public string FreightFree { get; set; }
+
+                #region 店铺优惠券
+
+                /// <summary>
+                /// 优惠券信息 Json格式
+                /// </summary>
+                public string CouponData { get; set; }
+
+                public IList<Coupon> Coupons
+                {
+                    get
+                    {
+                        if (string.IsNullOrEmpty(CouponData)) return null;
+                        try
+                        {
+                            return JsonConvert.DeserializeObject<IList<Coupon>>(CouponData);
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                }
+
+                #endregion
+
+                #region 赠品
+
+                /// <summary>
+                /// 赠品信息 Json格式
+                /// </summary>
+                public string GiftData { get; set; }
+
+                public Gift Gift
+                {
+                    get
+                    {
+                        if (string.IsNullOrEmpty(GiftData)) return null;
+                        try
+                        {
+                            return JsonConvert.DeserializeObject<Gift>(GiftData);
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                }
+
+                #endregion
+
+            }
+
+            #region 店铺优惠券
+            /// <summary>
+            /// 店铺优惠券 http://bbs.taobao.com/catalog/thread/16543510-264269834.htm
+            /// </summary>
+            public class Coupon
+            {
+                /// <summary>
+                /// 面额 3 5 10 20 50 100 200
+                /// </summary>
+                public int Value { get; set; }
+
+                /// <summary>
+                /// 数量
+                /// </summary>
+                public int Count { get; set; }
+
+                /// <summary>
+                /// 适用范围 pc wap app 通用
+                /// </summary>
+                public Plateform Plateform { get; set; }
+
+                /// <summary>
+                /// 生效时间
+                /// </summary>
+                public DateTime StartOn { get; set; }
+
+                /// <summary>
+                /// 失效时间 失效时间不应早于生效时间及活动结束时间
+                /// </summary>
+                public DateTime StopOn { get; set; }
+
+                /// <summary>
+                /// 使用条件 不限/订单满x元
+                /// </summary>
+                public bool Limit { get; set; }
+
+                /// <summary>
+                /// 使用条件值 订单满x元
+                /// </summary>
+                public decimal LimitVal { get; set; }
+
+            }
+            #endregion
+
+            #region 赠品
+            public class Gift
+            {
+                /// <summary>
+                /// 用户可自选
+                /// </summary>
+                public bool Custom { get; set; }
+
+                /// <summary>
+                /// 可自选商品数限制
+                /// </summary>
+                public int Limit { get; set; }
+
+                public IList<Item> Items { get; set; }
+
+                public class Item
+                {
+                    /// <summary>
+                    /// SkuId
+                    /// </summary>
+                    public int SkuId { get; set; }
+
+                    /// <summary>
+                    /// ItemId
+                    /// </summary>
+                    public int ItemId { get; set; }
+
+                    /// <summary>
+                    /// 名称
+                    /// </summary>
+                    public string Name { get; set; }
+
+                    /// <summary>
+                    /// 数量
+                    /// </summary>
+                    public int Quantity { get; set; }
+
+                    /// <summary>
+                    /// 销售属性
+                    /// </summary>
+                    public string PropText { get; set; }
+                }
+
+            }
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region 搭配组合套餐
+        /// <summary>
+        /// 搭配组合套餐 http://bbs.taobao.com/catalog/thread/16543510-264271296.htm
+        /// </summary>
+        public class Package : Promotion
+        {
+            /// <summary>
+            /// 固定组合套餐 商品打包成套餐销售，消费者打包购买
+            /// 自选商品套餐 套餐中的附属商品，消费者可以通过复选框的方式，有选择的购买
+            /// </summary>
+            public bool Fixed { get; set; }
+
+            /// <summary>
+            /// 主商品Id
+            /// </summary>
+            public int ItemId { get; set; }
+
+            /// <summary>
+            /// 主商品名称
+            /// </summary>
+            public int ItemName { get; set; }
+
+            /// <summary>
+            /// 主商品搭配价格 0为默认如果不设置搭配价，则执行在售价(适用于有多个不同Sku,如果没有sku则可设置一个搭配价格)
+            /// </summary>
+            public decimal ItemPrice { get; set; }
+
+            /// <summary>
+            /// 主商品搭配图
+            /// </summary>
+            public string ItemPictrue { get; set; }
+
+            /// <summary>
+            /// 用户参与活动限制
+            /// </summary>
+            public Enum.Limit Limit { get; set; }
+
+            /// <summary>
+            /// 用户参与活动限制值 Limit为true时有效
+            /// </summary>
+            public int LimitValue { get; set; }
+
+            /// <summary>
+            /// 搭配组合套餐附属商品 最多可以添加8个
+            /// </summary>
+            public virtual IList<Item> Items { get; set; }
+
+            /// <summary>
+            /// 判断活动是否有效
+            /// </summary>
+            /// <returns></returns>
+            public override bool IsValid()
+            {
+                return base.IsValid() && Items.Any(x => x.Status);
+            }
+
+            /// <summary>
+            /// 搭配组合套餐附属商品
+            /// </summary>
+            public class Item : BaseEntity<int>
+            {
+                /// <summary>
+                /// 搭配组合套餐Id
+                /// </summary>
+                public int ParentId { get; set; }
+
+                /// <summary>
+                /// 主商品Id
+                /// </summary>
+                public int MainId { get; set; }
+                /*
+                /// <summary>
+                /// 商品Id/SkuId
+                /// </summary>
+                public int SubId { get; set; }
+
+                /// <summary>
+                /// 附属商品图片
+                /// </summary>                
+                public string SubPic { get; set; }
+
+                /// <summary>
+                /// 附属商品名称
+                /// </summary>
+                public string SubName { get; set; }
+
+                /// <summary>
+                /// 附属商品价格 0为默认如果不设置搭配价，则执行在售价
+                /// </summary>
+                public decimal SubPrice { get; set; }
+                */
+
+                /// <summary>
+                /// SkuId
+                /// </summary>
+                public int SkuId { get; set; }
+
+                /// <summary>
+                /// ItemId
+                /// </summary>
+                public int ItemId { get; set; }
+
+                /// <summary>
+                /// 附属商品名称
+                /// </summary>
+                public string Name { get; set; }
+
+                /// <summary>
+                /// 附属商品价格 0为默认如果不设置搭配价，则执行在售价
+                /// </summary>
+                public decimal Price { get; set; }
+
+                /// <summary>
+                /// 附属商品图片
+                /// </summary>                
+                public string Picture { get; set; }
+
+                /// <summary>
+                /// 默认勾选
+                /// </summary>
+                public bool Selected { get; set; }
+
+                /// <summary>
+                /// 排序 从大到小
+                /// </summary>
+                public int Priority { get; set; }
+
+                /// <summary>
+                /// 卖家Id
+                /// </summary>
+                public int SellerId { get; set; }
+
+                /// <summary>
+                /// 状态
+                /// </summary>
+                public bool Status { get; set; }
+
+            }
+        }
+
+        #endregion
+
+        #region 限购
+        /// <summary>
+        /// 限购 http://bbs.taobao.com/catalog/thread/16543510-264271770.htm
+        /// </summary>
+        public class LimitBuy : Promotion
+        {
+            /*
+            1.  限购件数最多可以设置为多少？
+            限购件数最多可配置为200件。
+		
+            2.  限购时段最长可以设置为多久？
+            限购时段最长可设为30天。
+		
+            3.  限购开始时间不能晚于当前时间多少天？
+            限购开始时间不能晚于当前时间90天。
+		
+            4. 每个商品最多可以设置多少条限购规则？
+            每个商品最多同时设置5条有效的限购规则；
+            有效的限购规则是指：正在进行中和即将开始的限购
+		
+            ●  商家可对自己的商品配置在时间段内每个ID限购该几件。
+            ●  该限购与该商品的价格无关，只与消费者已经购买了该商品几件相关
+            ●  限购逻辑更严谨：消费者对商品下单，件数算入限购；如果订单未付款且关闭了，那么会回补限购数，避免消费者由于拍错规格码色等导致的误限购
+            ●  达到限购数不能下单
+            */
+
+            /// <summary>
+            /// 商品Id
+            /// </summary>
+            public int ItemId { get; set; }
+
+            /// <summary>
+            /// 限购数量
+            /// </summary>
+            public int Value { get; set; }
+
+            /// <summary>
+            /// 判断限购是否有效
+            /// </summary>
+            /// <returns></returns>
+            public override bool IsValid()
+            {
+                return base.IsValid() && ItemId > 0 && Value > 0;
+            }
+
+        }
+        #endregion
+
+        #region 特价
+        /// <summary>
+        /// 特价 http://bbs.taobao.com/catalog/thread/16543510-264264853.htm
+        /// </summary>
+        public class SpecialPrice : Promotion
+        {
+            /// <summary>
+            /// A打折  B减价  C促销价 活动创建后,优惠方式将不能修改
+            /// </summary>
+            public Enum.SpecialPriceCategoy Categoy { get; set; }
+
+
+            #region 运费
+            /// <summary>
+            /// 免运费
+            /// </summary>
+            public bool FreightFree { get; set; }
+
+            /// <summary>
+            /// 免运费排除在外的地区(以','分隔)
+            /// </summary>
+            public string FreightFreeExclude { get; set; }
+
+            #endregion
+
+            /// <summary>
+            /// 特价活动商品
+            /// </summary>
+            public virtual IList<Item> Items { get; set; }
+
+            /// <summary>
+            /// 判断特价是否有效
+            /// </summary>
+            /// <returns></returns>
+            public override bool IsValid()
+            {
+                return base.IsValid() && Items.Any(x => x.Status);
+            }
+
+            /// <summary>
+            /// 判断特价是否包含指定的商品
+            /// </summary>
+            /// <param name="itemId">商品ItemId</param>
+            /// <param name="skuId">商品SkuId</param>
+            /// <returns></returns>
+            public Magic<bool, decimal> Contain(int itemId, int? skuId = null)
+            {
+                if (IsValid())
+                {
+                    var item = Items.FirstOrDefault(x => x.ItemId == itemId);
+                    if (item != null)
+                    {
+                        if (item.Global)
+                        {
+                            return new Magic<bool, decimal>(true, item.Value);
+                        }
+                        if (skuId.HasValue && item.Skus != null)
+                        {
+                            var sku = item.Skus.FirstOrDefault(x => x.Id == skuId);
+                            if (sku != null)
+                            {
+                                return new Magic<bool, decimal>(true, item.Value);
+                            }
+                        }
+                    }
+                }
+                return new Magic<bool, decimal>(false);
+            }
+
+            /// <summary>
+            /// 特价活动商品
+            /// </summary>
+            public class Item : BaseEntity<int>
+            {
+                /// <summary>
+                /// 特价活动Id
+                /// </summary>
+                public int ParentId { get; set; }
+
+                /// <summary>
+                /// 商品Id
+                /// </summary>
+                public int ItemId { get; set; }
+
+                /// <summary>
+                /// 统一设置优惠(商品维度)
+                /// </summary>
+                public bool Global { get; set; }
+
+                /// <summary>
+                /// 统一设置优惠值(商品维度)
+                /// </summary>
+                public decimal Value { get; set; }
+
+                /// <summary>
+                /// 用户参与活动限制
+                /// </summary>
+                public Enum.Limit Limit { get; set; }
+
+                /// <summary>
+                /// 用户参与活动限制值 Limit为true时有效
+                /// </summary>
+                public int LimitValue { get; set; }
+
+                /// <summary>
+                /// 对Sku设置的优惠信息 Json格式
+                /// </summary>
+                public string SkuJson { get; set; }
+
+                /// <summary>
+                /// 卖家Id
+                /// </summary>
+                public int SellerId { get; set; }
+
+                /// <summary>
+                /// 状态
+                /// </summary>
+                public bool Status { get; set; }
+
+                /// <summary>
+                /// 对Sku设置的优惠
+                /// </summary>
+                public IList<Sku> Skus
+                {
+                    get
+                    {
+                        if (Global || string.IsNullOrEmpty(SkuJson)) return null;
+                        try
+                        {
+                            return JsonConvert.DeserializeObject<IList<Sku>>(SkuJson);
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    }
+                }
+
+                /// <summary>
+                /// SKU维度的优惠
+                /// </summary>
+                public class Sku
+                {
+                    /// <summary>
+                    /// Id
+                    /// </summary>
+                    public int Id { get; set; }
+
+                    /// <summary>
+                    /// 优惠值(SKU维度)
+                    /// </summary>
+                    public decimal Value { get; set; }
+
+                    public string Name { get; set; }
+
+                }
+
+            }
+        }
+        #endregion
+
+        #region 购物车促销
+        /// <summary>
+        /// 购物车促销
+        /// </summary>
+        public class Cart : Promotion
+        {
+            /// <summary>
+            /// 适用付款方式
+            /// </summary>
+            public PayMethod PayMethod { get; set; }
+
+            /// <summary>
+            /// 促销效果作用于
+            /// </summary>
+            public Enum.ApplyTo ApplyTo { get; set; }
+
+            /// <summary>
+            /// true为打折 false为减元
+            /// </summary>
+            public bool Discount { get; set; }
+
+            /// <summary>
+            /// 促销值 减x元 打x折
+            /// </summary>
+            public decimal Value { get; set; }
+
+            /// <summary>
+            /// 用户参与活动限制
+            /// </summary>
+            public Enum.Limit Limit { get; set; }
+
+            /// <summary>
+            /// 用户参与活动限制值 Limit为true时有效
+            /// </summary>
+            public int LimitValue { get; set; }
+
+            /// <summary>
+            /// 商品类目Id *为匹配所有类目 如需匹配部分类目 使用","分隔
+            /// </summary>
+            public string ProdCatetory { get; set; }
+
+            /// <summary>
+            /// 商品品牌Id *为匹配所有品牌 如需匹配部分品牌 使用","分隔
+            /// </summary>
+            public string ProdBrand { get; set; }
+
+            /// <summary>
+            /// 商品ItemId *为匹配所有商品 如需匹配部分商品 使用","分隔
+            /// </summary>
+            public string ProdItem { get; set; }
+
+            /// <summary>
+            /// 区域Id *为匹配所有区 如需匹配部分区 使用","分隔
+            /// </summary>
+            public string Area { get; set; }
+
+            /// <summary>
+            /// UserId *为匹配所有用户 如需匹配部分用户 使用","分隔
+            /// </summary>
+            public string User { get; set; }
+
+            /// <summary>
+            /// 促销生效必要条件
+            /// </summary>
+            public virtual IList<Rule> Rules { get; set; }
+
+            /// <summary>
+            /// 判断限购是否有效
+            /// </summary>
+            /// <returns></returns>
+            public override bool IsValid()
+            {
+                return base.IsValid() && Rules.Any(x => x.Status);
+            }
+
+
+            /// <summary>
+            /// 必要条件
+            /// </summary>
+            public class Rule : Promotion
+            {
+                /// <summary>
+                /// 购物车活动Id
+                /// </summary>
+                public int ParentId { get; set; }
+
+                /// <summary>
+                /// 计算方式
+                /// </summary>
+                public Enum.Calc Calc { get; set; }
+
+                /// <summary>
+                /// 参数值
+                /// </summary>
+                public string Value { get; set; }
+
+                /// <summary>
+                /// 优先顺序 从大到小
+                /// </summary>
+                public int Priority { get; set; }
+
+                /// <summary>
+                /// 通过Cale与Value生成的说明
+                /// </summary>
+                public string Description
+                {
+                    get
+                    {
+                        var s = string.Empty;
+                        if (Calc == Enum.Calc.A)
+                        {
+                            var v = AsValueA();
+                            if (v.IsValid)
+                            {
+                                if (v.And)
+                                {
+                                    var tpl = @"{0} -- {1} 期间有效订单总数 {2} {3}，且有效订单总金额 {4} {5}。";
+                                    s = string.Format(tpl, StartOn.ToString("yyyy-MM-dd"), StopOn.ToString("yyyy-MM-dd"),
+                                        v.CountOpt, v.CountParam, v.AmountOpt, v.AmountParam);
+                                    return s;
+                                }
+                                else
+                                {
+                                    var tpl = @"{0} -- {1} 期间有效订单总数 {2} {3}，或者有效订单总金额 {4} {5}。";
+                                    s = string.Format(tpl, StartOn.ToString("yyyy-MM-dd"), StopOn.ToString("yyyy-MM-dd"),
+                                        v.CountOpt, v.CountParam, v.AmountOpt, v.AmountParam);
+                                    return s;
+                                }
+                            }
+                            return "参数有误。";
+                        }
+                        if (Calc == Enum.Calc.B)
+                        {
+                            var v = AsValueB();
+                            if (v.IsValid)
+                            {
+                                if (v.And)
+                                {
+                                    var tpl = @"{0} -- {1} 期间已购买过 {2} 商品";
+                                    s = string.Format(tpl, StartOn.ToString("yyyy-MM-dd"), StopOn.ToString("yyyy-MM-dd"), string.Join(",", v.Param));
+                                    return s;
+                                }
+                                else
+                                {
+                                    var tpl = @"{0} -- {1} 期间已购买过 {2} 商品中的任何一个。";
+                                    s = string.Format(tpl, StartOn.ToString("yyyy-MM-dd"), StopOn.ToString("yyyy-MM-dd"), string.Join(",", v.Param));
+                                    return s;
+                                }
+                            }
+                            return "参数有误。";
+                        }
+                        if (Calc == Enum.Calc.C)
+                        {
+                            var v = AsValueB();
+                            if (v.IsValid)
+                            {
+                                if (v.And)
+                                {
+                                    var tpl = @"购物车中包含 {0} 商品";
+                                    s = string.Format(tpl, string.Join(",", v.Param));
+                                    return s;
+                                }
+                                else
+                                {
+                                    var tpl = @"购物车中包含 {0} 商品中的任何一个。";
+                                    s = string.Format(tpl, string.Join(",", v.Param));
+                                    return s;
+                                }
+                            }
+                            return "参数有误。";
+                        }
+                        if (Calc == Enum.Calc.D)
+                        {
+                            var v = AsValueC();
+                            if (v.IsValid)
+                            {
+                                var tpl = @"{0} -- {1} 期间有效评论数 {2} {3}。";
+                                s = string.Format(tpl, StartOn.ToString("yyyy-MM-dd"), StopOn.ToString("yyyy-MM-dd"), v.Opt, v.Param);
+                                return s;
+                            }
+                            return "参数有误。";
+                        }
+                        if (Calc == Enum.Calc.E)
+                        {
+                            var v = AsValueC();
+                            if (v.IsValid)
+                            {
+                                var tpl = @"{0} -- {1} 期间有效邀请人数 {2} {3}。";
+                                s = string.Format(tpl, StartOn.ToString("yyyy-MM-dd"), StopOn.ToString("yyyy-MM-dd"), v.Opt, v.Param);
+                                return s;
+                            }
+                            return "参数有误。";
+                        }
+                        return s;
+                    }
+                }
+
+                /// <summary>
+                /// Calc.A
+                /// </summary>
+                /// <returns></returns>
+                public ValueA AsValueA()
+                {
+                    // value值为 or:123,789 或 and:123,789
+                    if (Calc != Enum.Calc.A) return new ValueA(false);
+                    if (string.IsNullOrEmpty(Value)) return new ValueA(false);
+                    var value = Value.ToLower();
+                    if (value.StartsWith("and") || value.StartsWith("or"))
+                    {
+                        try
+                        {
+                            var o = new ValueA(true);
+                            var a = value.Split(':')[0];
+                            if (a == "and")
+                            {
+                                o.And = true;
+                            }
+                            var tmp = value.Split(':')[1];
+                            var vals = tmp.Split(',');
+                            var status = false;
+                            foreach (var val in vals)
+                            {
+                                if (val.StartsWith("count"))
+                                {
+                                    status = true;
+                                    o.CountOpt = val.Substring(5, 1)[0];
+                                    o.CountParam = Convert.ToInt32(val.Substring(6));
+                                }
+                                else if (val.StartsWith("amount"))
+                                {
+                                    status = true;
+                                    o.AmountOpt = val.Substring(6, 1)[0];
+                                    o.AmountParam = Convert.ToInt32(val.Substring(7));
+                                }
+                            }
+                            return status ? o : new ValueA(false);
+                        }
+                        catch (Exception)
+                        {
+                            return new ValueA(false);
+                        }
+                    }
+                    return new ValueA(false);
+                }
+
+                /// <summary>
+                /// Calc.B Calc.C
+                /// </summary>
+                /// <returns></returns>
+                public ValueB AsValueB()
+                {
+                    // value值为 or:123,789 或 and:123,789
+                    if (Calc != Enum.Calc.B && Calc != Enum.Calc.B) return new ValueB(false);
+                    if (string.IsNullOrEmpty(Value)) return new ValueB(false);
+                    var value = Value.ToLower();
+                    var tmp = value.Split(':');
+                    var op = tmp[0];
+                    if (op == "and" || op == "or")
+                    {
+                        if (!string.IsNullOrEmpty(tmp[0]))
+                        {
+                            try
+                            {
+                                var o = new ValueB(true);
+                                o.And = op == "and";
+                                var v = tmp[1].Split(',');
+                                o.Param = Array.ConvertAll(v, int.Parse);
+                                return o;
+                            }
+                            catch (Exception)
+                            {
+                                return new ValueB(false);
+                            }
+                        }
+                    }
+                    return new ValueB(false);
+                }
+
+                /// <summary>
+                /// 适用于Calc.D Calc.E
+                /// </summary>
+                /// <returns></returns>
+                public ValueC AsValueC()
+                {
+                    // value值为 >123 或 =123 或 >123
+                    if (Calc != Enum.Calc.D && Calc != Enum.Calc.E) return new ValueC(false);
+                    if (string.IsNullOrEmpty(Value)) return new ValueC(false);
+                    if (Value[0] != '<' && Value[0] != '=' && Value[0] != '>') return new ValueC(false);
+                    try
+                    {
+                        return new ValueC(true) { Opt = Value[0], Param = Convert.ToInt32(Value.Substring(1)) };
+                    }
+                    catch (Exception)
+                    {
+                        return new ValueC(false);
+                    }
+                }
+
+                /// <summary>
+                /// 适用于Calc.A
+                /// </summary>
+                public class ValueA
+                {
+                    /// <summary>
+                    /// 是否订单数/金额都必须满足
+                    /// </summary>
+                    public bool And { get; set; }
+                    /// <summary>
+                    /// 订单数比较值
+                    /// </summary>
+                    public char CountOpt { get; set; }
+                    /// <summary>
+                    /// 订单数
+                    /// </summary>
+                    public int CountParam { get; set; }
+                    /// <summary>
+                    /// 订单金额比较值
+                    /// </summary>
+                    public char AmountOpt { get; set; }
+                    /// <summary>
+                    /// 订单金额
+                    /// </summary>
+                    public int AmountParam { get; set; }
+                    /// <summary>
+                    /// 是否有效
+                    /// </summary>
+                    public bool IsValid { get; private set; }
+
+                    public ValueA(bool isValid)
+                    {
+                        CountOpt = '0';
+                        AmountOpt = '0';
+                        IsValid = isValid;
+                    }
+                }
+
+                /// <summary>
+                /// 适用于Calc.B Calc.C
+                /// </summary>
+                public class ValueB
+                {
+                    /// <summary>
+                    /// 是否商品都必须满足
+                    /// </summary>
+                    public bool And { get; set; }
+                    /// <summary>
+                    /// 商品Id
+                    /// </summary>
+                    public int[] Param { get; set; }
+                    /// <summary>
+                    /// 是否有效
+                    /// </summary>
+                    public bool IsValid { get; private set; }
+                    public ValueB(bool isValid)
+                    {
+                        IsValid = isValid;
+                    }
+                }
+
+                /// <summary>
+                /// 适用于Calc.D Calc.E
+                /// </summary>
+                public class ValueC
+                {
+                    /// <summary>
+                    /// 比较符
+                    /// </summary>
+                    public char Opt { get; set; }
+                    /// <summary>
+                    /// 比较值
+                    /// </summary>
+                    public int Param { get; set; }
+                    /// <summary>
+                    /// 是否有效
+                    /// </summary>
+                    public bool IsValid { get; private set; }
+                    public ValueC(bool isValid)
+                    {
+                        Opt = '0';
+                        IsValid = isValid;
+                    }
+                }
+            }
+
+        }
+        #endregion
+
+        #region 优惠券
+        /// <summary>
+        /// 优惠券 http://bbs.taobao.com/catalog/thread/16543510-264269859.htm
+        /// </summary>
+        public class Coupon : Promotion
+        {
+            /// <summary>
+            /// 是否为店铺优惠券 true为店铺优惠券 false为商品优惠券
+            /// </summary>
+            public bool Global { get; set; }
+
+            /// <summary>
+            /// 是否公开领取
+            /// </summary>
+            public bool Public { get; set; }
+
+            /// <summary>
+            /// 发行总量
+            /// </summary>
+            public int Count { get; set; }
+
+            /// <summary>
+            /// 面额 3 5 10 20 50 100 200
+            /// </summary>
+            public decimal Amount { get; set; }
+
+            /// <summary>
+            /// 使用条件 不限/订单满x元
+            /// </summary>
+            public bool Limit { get; set; }
+
+            /// <summary>
+            /// 使用条件值 订单满x元
+            /// </summary>
+            public decimal LimitVal { get; set; }
+
+            /// <summary>
+            /// 优惠券样式
+            /// </summary>
+            public string Style { get; set; }
+
+            /// <summary>
+            /// 指定商品 使用","分隔
+            /// </summary>
+            public string Item { get; set; }
+        }
+        #endregion
+
+        #region 枚举
+        public static class Enum
+        {
+            /// <summary>
+            /// 促销活动用户参与限制
+            /// </summary>
+            public enum Limit : byte
+            {
+                /// <summary>
+                /// 无限制
+                /// </summary>
+
+                None = 0,
+
+                /// <summary>
+                /// N次
+                /// </summary>
+                NTimesOnly = 1,
+
+                /// <summary>
+                /// 每用户N次
+                /// </summary>
+                NTimesPerUser = 2
+            }
+
+            /// <summary>
+            /// 特价类型 A打折  B减价  C促销价
+            /// </summary>
+            public enum SpecialPriceCategoy : byte
+            {
+                /// <summary>
+                /// 打折
+                /// </summary>
+                A = 1,
+
+                /// <summary>
+                /// 减价
+                /// </summary>
+                B = 2,
+
+                /// <summary>
+                /// 促销价
+                /// </summary>
+                C = 3
+            }
+
+            /// <summary>
+            /// 适用于 作用于
+            /// </summary>
+            public enum ApplyTo : byte
+            {
+                /// <summary>
+                /// 默认值
+                /// </summary>
+                None = 0,
+
+                /// <summary>
+                /// 订单总金额 (商品总金额+运费)
+                /// </summary>
+                OrderTotal = 1,
+
+                /// <summary>
+                /// 商品总金额
+                /// </summary>
+                OrderTotalSub = 2,
+
+                /// <summary>
+                /// 运费
+                /// </summary>
+                Freight = 3,
+
+                /// <summary>
+                /// 商品类目
+                /// </summary>
+                ProdCatetory = 4,
+
+                /// <summary>
+                /// 商品品牌
+                /// </summary>
+                ProdBrand = 5,
+
+                /// <summary>
+                /// 商品Id
+                /// </summary>
+                ProdItem = 6,
+
+                /// <summary>
+                /// 配送区域
+                /// </summary>
+                Area = 7,
+
+                /// <summary>
+                /// 用户
+                /// </summary>
+                User = 8
+
+            }
+
+            /// <summary>
+            /// 计算方式
+            /// </summary>
+            public enum Calc : byte
+            {
+                /// <summary>
+                /// 订单总量/金额
+                /// </summary>
+                A,
+                /// <summary>
+                /// 已购买过
+                /// </summary>
+                B,
+                /// <summary>
+                /// 购物车中包含
+                /// </summary>
+                C,
+                /// <summary>
+                /// 有效评论/晒单
+                /// </summary>
+                D,
+                /// <summary>
+                /// 有效邀请人
+                /// </summary>
+                E
+            }
+        }
+        #endregion
+
+    }
+}
