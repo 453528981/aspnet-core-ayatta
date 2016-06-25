@@ -47,12 +47,18 @@ namespace Ayatta.Web.Controllers
         {
             var data = new Prod.Mini();
             var model = new ItemModel.Item(data);
+
             model.CatgId = catgId;
+            model.ItemDesc = new Prod.ItemDesc();
+
             if (id > 0)
             {
                 data = DefaultStorage.ProdMiniGet(id);
-                model.CatgId = data.CatgId;
+
                 model.Data = data;
+                model.CatgId = data.CatgId;
+
+                model.ItemDesc = DefaultStorage.ProdItemDescGet(id);
             }
             return View(model);
         }
@@ -61,11 +67,17 @@ namespace Ayatta.Web.Controllers
         public IActionResult Item(int id, int catgId, int spuId, Prod.Item item)
         {
             var userId = 1;
+            var result = new Result<string>();
+            if (id < 0 || id < 0)
+            {
+                result.Message = "参数错误";
+                return Json(result);
+            }
             var form = Request.Form;
             var time = DateTime.Now;
             var propPrefix = "prop.";
             var itemPrefix = "item.";
-            var result = new Result<string>();
+
             if (item.Name.IsNullOrEmpty() || item.Name.Length > 30)
             {
                 result.Data = "name";
@@ -97,7 +109,7 @@ namespace Ayatta.Web.Controllers
                 return Json(result);
             }
             var summary = form[itemPrefix + "summary"].ToString();
-            if (summary.IsNullOrEmpty() || (summary.Length < 5 || summary.Length > 20000))
+            if (summary.IsNullOrEmpty() || (summary.Length < 5 || summary.Length > 200))
             {
                 result.Data = "summary";
                 return Json(result);
@@ -200,12 +212,12 @@ namespace Ayatta.Web.Controllers
             {
                 foreach (var skuKey in skuKeys)
                 {
-
                     if (skuKey.IsNullOrEmpty()) continue;
                     var codeParam = "sku.code." + skuKey;
                     var stockParam = "sku.stock." + skuKey;
                     var priceParam = "sku.price." + skuKey;
                     var appPriceParam = "sku.appPrice." + skuKey;
+                    var barcodeParam = "sku.barcode." + skuKey;
 
                     int stock;
                     decimal price, appPrice;
@@ -214,7 +226,7 @@ namespace Ayatta.Web.Controllers
                     var stockVal = form[stockParam].ToString().Trim();
                     var priceVal = form[priceParam].ToString().Trim();
                     var appPriceVal = form[appPriceParam].ToString().Trim();
-
+                    var barcodeVal = form[barcodeParam].ToString().Trim();
 
                     if (stockVal.IsNullOrEmpty() || !int.TryParse(stockVal, out stock) || priceVal.IsNullOrEmpty() || !decimal.TryParse(priceVal, out price) || appPriceVal.IsNullOrEmpty() || !decimal.TryParse(appPriceVal, out appPrice))
                     {
@@ -239,7 +251,7 @@ namespace Ayatta.Web.Controllers
                     sku.CatgRId = 0;
                     sku.CatgMId = "";
                     sku.Code = codeVal;
-                    sku.Barcode = "";
+                    sku.Barcode = barcodeVal;
                     sku.BrandId = item.BrandId;
                     sku.Stock = stock;
                     sku.Price = price;
@@ -247,7 +259,7 @@ namespace Ayatta.Web.Controllers
                     sku.PropId = skuKey;
                     sku.PropStr = propstr.TrimEnd(';');
                     sku.SaleCount = 0;
-                    sku.Status = Prod.Status.Online;
+                    sku.Status = itemStatus;
                     sku.CreatedOn = time;
                     sku.ModifiedBy = "";
                     sku.ModifiedOn = time;
@@ -284,24 +296,30 @@ namespace Ayatta.Web.Controllers
             item.Code = item.Code;
             item.Name = item.Name.StripHtml();
             item.Title = item.Title.StripHtml();
-
+            item.Barcode = item.Barcode;
             item.Keyword = "";
             item.PropId = propIdBuilder.ToString().TrimEnd(';');
             item.PropStr = propStrBuilder.ToString().TrimEnd(';');
             item.PropAlias = string.Empty;
             item.InputId = "";
             item.InputStr = "";
-            item.Width = 0;
-            item.Depth = 0;
-            item.Height = 0;
-            item.Weight = 0;
             item.Summary = summary;
             item.Picture = picture;
             item.ItemImgStr = itemImgStr;
             item.PropImgStr = JsonConvert.SerializeObject(colorImgDic);
+            item.Width = 0;
+            item.Depth = 0;
+            item.Height = 0;
+            item.Weight = 0;
+            item.Location = "";
+            item.IsBonded = false;
+            item.IsOversea = false;
+            item.IsTiming = isTiming;
             item.IsVirtual = false;
             item.IsAutoFill = false;
-            item.IsTiming = isTiming;
+            item.SupportCod = false;
+            item.FreePostage = false;
+            item.PostageTplId = 1;
             item.SubStock = subStock;
             item.Showcase = 1;
             item.OnlineOn = time;
@@ -320,6 +338,41 @@ namespace Ayatta.Web.Controllers
             item.ModifiedOn = time;
 
             item.Skus = skus;
+
+            item.Desc.CreatedOn = time;
+            item.Desc.ModifiedBy = "";
+            item.Desc.ModifiedOn = time;
+
+
+            if (id > 0)
+            {
+                item.Id = id;
+                var propIds = item.Skus.Select(x => x.PropId);
+
+                var oldSkus = DefaultStorage.ProdSkuList(id);
+
+                var oldSkuPropIds = oldSkus.Select(x => x.PropId);
+
+                var dic = oldSkus.ToDictionary(x => x.PropId, x => x.Id);
+                foreach (var sku in item.Skus)
+                {
+                    if (dic.ContainsKey(sku.PropId))
+                    {
+                        sku.Id = dic[sku.PropId];//更新
+                    }
+                    else
+                    {
+                        sku.Id = 0;//新增
+                    }
+                }
+
+                var deletedPropIds = oldSkuPropIds.Except(propIds);//删除的
+
+                var deletedIds = oldSkus.Where(x => deletedPropIds.Contains(x.PropId)).Select(x => x.Id);
+
+                result.Status = DefaultStorage.ProdItemUpdate(item, deletedIds.ToArray());
+                return Json(result);
+            }
 
             var newId = DefaultStorage.ProdItemCreate(item);
             result.Data = newId.ToString();
@@ -342,7 +395,7 @@ namespace Ayatta.Web.Controllers
             var result = new Result();
             item.Id = id;
             item.UserId = 1;
-            item.Barcode = "aa";
+
             if (item.Skus != null && item.Skus.Any())
             {
                 item.Price = item.Skus.Min(x => x.Price);

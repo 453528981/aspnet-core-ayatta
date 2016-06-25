@@ -128,7 +128,7 @@ namespace Dapper
                     sb.Append(data["having"]);
                 if (data.ContainsKey("orderby"))
                     sb.Append(data["orderby"]);
-                if (take == 0)
+                if (take > 0)
                 {
                     sb.Append(" limit " + take);
                 }

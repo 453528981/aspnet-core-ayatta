@@ -11,7 +11,7 @@ namespace Ayatta.Domain
 
         ///<summary>
         /// Item
-        ///created on 2016-05-13 13:35:50
+        /// created on 2016-05-13 13:35:50
         ///<summary>
         [ProtoContract]
         public class Item : IEntity<int>
@@ -122,207 +122,242 @@ namespace Ayatta.Domain
             ///<summary>
             /// 商品属性Id 格式：pid:vid;pid:vid
             ///<summary>
-            [JsonIgnore]
             [ProtoMember(18)]
             public string PropId { get; set; }
 
             ///<summary>
             /// 商品属性值 格式 pid:vid:pname:vname;pid:vid:pname:vname
             ///<summary>
-            [JsonIgnore]
             [ProtoMember(19)]
             public string PropStr { get; set; }
 
             ///<summary>
             /// 属性值别名,比如颜色的自定义名称 1627207:28335:草绿;1627207:3232479:深紫
             ///<summary>
-            [JsonIgnore]
             [ProtoMember(20)]
             public string PropAlias { get; set; }
 
             ///<summary>
             /// 商品输入属性Id
             ///<summary>
-            [JsonIgnore]
             [ProtoMember(21)]
             public string InputId { get; set; }
 
             ///<summary>
             /// 商品输入属性值
             ///<summary>
-            [JsonIgnore]
             [ProtoMember(22)]
             public string InputStr { get; set; }
 
             ///<summary>
-            /// 宽度
-            ///<summary>
-            [ProtoMember(23)]
-            public decimal Width { get; set; }
-
-            ///<summary>
-            /// 深度
-            ///<summary>
-            [ProtoMember(24)]
-            public decimal Depth { get; set; }
-
-            ///<summary>
-            /// 高度
-            ///<summary>
-            [ProtoMember(25)]
-            public decimal Height { get; set; }
-
-            ///<summary>
-            /// 重量
-            ///<summary>
-            [ProtoMember(26)]
-            public decimal Weight { get; set; }
-
-            ///<summary>
             /// 商品概要
             ///<summary>
-            [ProtoMember(27)]
+            [ProtoMember(23)]
             public string Summary { get; set; }
 
             ///<summary>
             /// 商品主图片地址
             ///<summary>
-            [ProtoMember(28)]
+            [ProtoMember(24)]
             public string Picture { get; set; }
 
             ///<summary>
             /// 商品图片列表(包括主图)
             ///<summary>
-            [JsonIgnore]
-            [ProtoMember(29)]
+            [ProtoMember(25)]
             public string ItemImgStr { get; set; }
 
             ///<summary>
             /// 商品属性图片列表
             ///<summary>
-            [JsonIgnore]
-            [ProtoMember(30)]
+            [ProtoMember(26)]
             public string PropImgStr { get; set; }
+
+            ///<summary>
+            /// 宽度
+            ///<summary>
+            [ProtoMember(27)]
+            public decimal Width { get; set; }
+
+            ///<summary>
+            /// 深度
+            ///<summary>
+            [ProtoMember(28)]
+            public decimal Depth { get; set; }
+
+            ///<summary>
+            /// 高度
+            ///<summary>
+            [ProtoMember(29)]
+            public decimal Height { get; set; }
+
+            ///<summary>
+            /// 重量
+            ///<summary>
+            [ProtoMember(30)]
+            public decimal Weight { get; set; }
+
+            ///<summary>
+            /// 国内商品所在地(城市)Code
+            ///<summary>
+            [ProtoMember(31)]
+            public string Location { get; set; }
+
+            ///<summary>
+            /// 是否为保税仓发货
+            ///<summary>
+            [ProtoMember(32)]
+            public bool IsBonded { get; set; }
+
+            ///<summary>
+            /// 是否为海外直邮
+            ///<summary>
+            [ProtoMember(33)]
+            public bool IsOversea { get; set; }
+
+            ///<summary>
+            /// 是否定时上架商品
+            ///<summary>
+            [ProtoMember(34)]
+            public bool IsTiming { get; set; }
 
             ///<summary>
             /// 是否为虚拟物品
             ///<summary>
-            [ProtoMember(31)]
+            [ProtoMember(35)]
             public bool IsVirtual { get; set; }
 
             ///<summary>
             /// 代充商品类型 可选类型： timecard(点卡软件代充) feecard(话费软件代充)
             ///<summary>
-            [ProtoMember(32)]
+            [ProtoMember(36)]
             public bool IsAutoFill { get; set; }
 
             ///<summary>
-            /// 是否定时上架商品
+            /// 是否支持货到付款
             ///<summary>
-            [ProtoMember(33)]
-            public bool IsTiming { get; set; }
+            [ProtoMember(37)]
+            public bool SupportCod { get; set; }
+
+            ///<summary>
+            /// 是否包邮
+            ///<summary>
+            [ProtoMember(38)]
+            public bool FreePostage { get; set; }
+
+            ///<summary>
+            /// 运费模板Id
+            ///<summary>
+            [ProtoMember(39)]
+            public int PostageTplId { get; set; }
 
             ///<summary>
             /// 0为拍下减库存 1为付款减库存
             ///<summary>
-            [ProtoMember(34)]
+            [ProtoMember(40)]
             public byte SubStock { get; set; }
 
             ///<summary>
             /// 橱窗推荐
             ///<summary>
-            [ProtoMember(35)]
+            [ProtoMember(41)]
             public int Showcase { get; set; }
 
             ///<summary>
             /// 上架时间
             ///<summary>
-            [ProtoMember(36)]
+            [ProtoMember(42)]
             public DateTime OnlineOn { get; set; }
 
             ///<summary>
             /// 下架时间
             ///<summary>
-            [ProtoMember(37)]
+            [ProtoMember(43)]
             public DateTime OfflineOn { get; set; }
 
             ///<summary>
             /// 积分奖励
             ///<summary>
-            [ProtoMember(38)]
+            [ProtoMember(44)]
             public decimal RewardRate { get; set; }
 
             ///<summary>
             /// 是否有发票
             ///<summary>
-            [ProtoMember(39)]
+            [ProtoMember(45)]
             public bool HasInvoice { get; set; }
 
             ///<summary>
             /// 是否有保修
             ///<summary>
-            [ProtoMember(40)]
+            [ProtoMember(46)]
             public bool HasWarranty { get; set; }
 
             ///<summary>
             /// 是否承诺退换货服务
             ///<summary>
-            [ProtoMember(41)]
+            [ProtoMember(47)]
             public bool HasGuarantee { get; set; }
 
             ///<summary>
             /// 销售数量
             ///<summary>
-            [ProtoMember(42)]
+            [ProtoMember(48)]
             public int SaleCount { get; set; }
 
             ///<summary>
             /// 收藏数量
             ///<summary>
-            [ProtoMember(43)]
+            [ProtoMember(49)]
             public int CollectCount { get; set; }
 
             ///<summary>
             /// 咨询数量
             ///<summary>
-            [ProtoMember(44)]
+            [ProtoMember(50)]
             public int ConsultCount { get; set; }
 
             ///<summary>
             /// 评论数量
             ///<summary>
-            [ProtoMember(45)]
+            [ProtoMember(51)]
             public int CommentCount { get; set; }
 
             ///<summary>
             /// 状态 0为可用
             ///<summary>
-            [ProtoMember(46)]
+            [ProtoMember(52)]
             public Status Status { get; set; }
 
             ///<summary>
             /// 创建时间
             ///<summary>
-            [ProtoMember(47)]
+            [ProtoMember(53)]
             public DateTime CreatedOn { get; set; }
 
             ///<summary>
             /// 最后一次编辑者
             ///<summary>
-            [ProtoMember(48)]
+            [ProtoMember(54)]
             public string ModifiedBy { get; set; }
 
             ///<summary>
             /// 最后一次编辑时间
             ///<summary>
-            [ProtoMember(49)]
+            [ProtoMember(55)]
             public DateTime ModifiedOn { get; set; }
 
+            /// <summary>
+            /// 商品描述
+            /// </summary>
+            /// <returns></returns>
+            [ProtoMember(100)]
+            public virtual ItemDesc Desc { get; set; }
 
             /// <summary>
             /// Sku列表
             /// </summary>
-            [ProtoMember(100)]
+            [ProtoMember(101)]
             public virtual IList<Sku> Skus { get; set; }
 
             /// <summary>
@@ -443,5 +478,71 @@ namespace Ayatta.Domain
                 }
             }
         }
+
+
+        ///<summary>
+        /// ItemDesc
+        /// created on 2016-05-13 13:35:50
+        ///<summary>
+        [ProtoContract]
+        public class ItemDesc : IEntity<int>
+        {
+
+            ///<summary>
+            /// Id
+            ///<summary>
+            [ProtoMember(1)]
+            public int Id { get; set; }
+
+            ///<summary>
+            /// 商品详情
+            ///<summary>
+            [ProtoMember(2)]
+            public string Detail { get; set; }
+
+            ///<summary>
+            /// 使用方法
+            ///<summary>
+            [ProtoMember(3)]
+            public string Useage { get; set; }
+
+            ///<summary>
+            /// 产品实拍
+            ///<summary>
+            [ProtoMember(4)]
+            public string Photo { get; set; }
+
+            ///<summary>
+            /// 品牌故事
+            ///<summary>
+            [ProtoMember(5)]
+            public string Story { get; set; }
+
+            ///<summary>
+            /// 使用须知
+            ///<summary>
+            [ProtoMember(6)]
+            public string Notice { get; set; }
+
+            ///<summary>
+            /// 创建时间
+            ///<summary>
+            [ProtoMember(7)]
+            public DateTime CreatedOn { get; set; }
+
+            ///<summary>
+            /// 最后一次编辑者
+            ///<summary>
+            [ProtoMember(8)]
+            public string ModifiedBy { get; set; }
+
+            ///<summary>
+            /// 最后一次编辑时间
+            ///<summary>
+            [ProtoMember(9)]
+            public DateTime ModifiedOn { get; set; }
+        }
+
+
     }
 }

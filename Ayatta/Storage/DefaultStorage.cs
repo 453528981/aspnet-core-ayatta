@@ -1,3 +1,4 @@
+using System;
 using Dapper;
 using System.Linq;
 using Ayatta.Domain;
@@ -51,6 +52,15 @@ namespace Ayatta.Storage
             }
         }
 
+        public Prod.ItemDesc ProdItemDescGet(int id)
+        {
+            var cmd = SqlBuilder
+            .Select("*").From("itemdesc")
+            .Where("id=@id", new { id })
+            .ToCommand();
+            return StoreConn.QueryFirstOrDefault<Prod.ItemDesc>(cmd);
+        }
+
         public Prod.Sku ProdSkuGet(int id)
         {
             var cmd = SqlBuilder
@@ -58,6 +68,15 @@ namespace Ayatta.Storage
             .Where("id=@id", new { id })
             .ToCommand();
             return StoreConn.QueryFirstOrDefault<Prod.Sku>(cmd);
+        }
+
+        public IList<Prod.Sku> ProdSkuList(int itemId)
+        {
+            var cmd = SqlBuilder
+            .Select("*").From("sku")
+            .Where("ItemId=@ItemId", new { itemId })
+            .ToCommand();
+            return StoreConn.Query<Prod.Sku>(cmd).ToList();
         }
 
         public int ProdItemCreate(Prod.Item o)
@@ -92,17 +111,23 @@ namespace Ayatta.Storage
                         .Column("PropAlias", o.PropAlias)
                         .Column("InputId", o.InputId)
                         .Column("InputStr", o.InputStr)
-                        .Column("Width", o.Width)
-                        .Column("Depth", o.Depth)
-                        .Column("Height", o.Height)
-                        .Column("Weight", o.Weight)
                         .Column("Summary", o.Summary)
                         .Column("Picture", o.Picture)
                         .Column("ItemImgStr", o.ItemImgStr)
                         .Column("PropImgStr", o.PropImgStr)
+                        .Column("Width", o.Width)
+                        .Column("Depth", o.Depth)
+                        .Column("Height", o.Height)
+                        .Column("Weight", o.Weight)
+                        .Column("Location", o.Location)
+                        .Column("IsBonded", o.IsBonded)
+                        .Column("IsOversea", o.IsOversea)
+                        .Column("IsTiming", o.IsTiming)
                         .Column("IsVirtual", o.IsVirtual)
                         .Column("IsAutoFill", o.IsAutoFill)
-                        .Column("IsTiming", o.IsTiming)
+                        .Column("SupportCod", o.SupportCod)
+                        .Column("FreePostage", o.FreePostage)
+                        .Column("PostageTplId", o.PostageTplId)
                         .Column("SubStock", o.SubStock)
                         .Column("Showcase", o.Showcase)
                         .Column("OnlineOn", o.OnlineOn)
@@ -126,35 +151,51 @@ namespace Ayatta.Storage
 
                         if (id > 0)
                         {
-                            foreach (var sku in o.Skus)
+
+                            cmd = SqlBuilder.Insert("ItemDesc")
+                            .Column("Id", id)
+                            .Column("Detail", o.Desc.Detail)
+                            .Column("Useage", o.Desc.Detail)
+                            .Column("Photo", o.Desc.Detail)
+                            .Column("Story", o.Desc.Detail)
+                            .Column("Notice", o.Desc.Detail)
+                            .Column("CreatedOn", o.Desc.CreatedOn)
+                            .Column("ModifiedBy", o.Desc.ModifiedBy)
+                            .Column("ModifiedOn", o.Desc.ModifiedOn)
+                            .ToCommand(false, tran);
+                            status = conn.Execute(cmd) > 0;
+                            if (status)
                             {
-                                cmd = SqlBuilder.Insert("sku")
-
-                                .Column("SpuId", sku.SpuId)
-                                .Column("ItemId", id)
-                                .Column("UserId", sku.UserId)
-                                .Column("CatgId", sku.CatgId)
-                                .Column("CatgRId", sku.CatgRId)
-                                .Column("CatgMId", sku.CatgMId)
-                                .Column("Code", sku.Code)
-                                .Column("Barcode", sku.Barcode)
-                                .Column("BrandId", sku.BrandId)
-                                .Column("Stock", sku.Stock)
-                                .Column("Price", sku.Price)
-                                .Column("AppPrice", sku.AppPrice)
-                                .Column("PropId", sku.PropId)
-                                .Column("PropStr", sku.PropStr)
-                                .Column("SaleCount", sku.SaleCount)
-                                .Column("Status", sku.Status)
-                                .Column("CreatedOn", sku.CreatedOn)
-                                .Column("ModifiedBy", sku.ModifiedBy)
-                                .Column("ModifiedOn", sku.ModifiedOn)
-                                .ToCommand(false, tran);
-
-                                status = conn.Execute(cmd) > 0;
-                                if (!status)
+                                foreach (var sku in o.Skus)
                                 {
-                                    break;
+                                    cmd = SqlBuilder.Insert("sku")
+
+                                    .Column("SpuId", sku.SpuId)
+                                    .Column("ItemId", id)
+                                    .Column("UserId", sku.UserId)
+                                    .Column("CatgId", sku.CatgId)
+                                    .Column("CatgRId", sku.CatgRId)
+                                    .Column("CatgMId", sku.CatgMId)
+                                    .Column("Code", sku.Code)
+                                    .Column("Barcode", sku.Barcode)
+                                    .Column("BrandId", sku.BrandId)
+                                    .Column("Stock", sku.Stock)
+                                    .Column("Price", sku.Price)
+                                    .Column("AppPrice", sku.AppPrice)
+                                    .Column("PropId", sku.PropId)
+                                    .Column("PropStr", sku.PropStr)
+                                    .Column("SaleCount", sku.SaleCount)
+                                    .Column("Status", sku.Status)
+                                    .Column("CreatedOn", sku.CreatedOn)
+                                    .Column("ModifiedBy", sku.ModifiedBy)
+                                    .Column("ModifiedOn", sku.ModifiedOn)
+                                    .ToCommand(false, tran);
+
+                                    status = conn.Execute(cmd) > 0;
+                                    if (!status)
+                                    {
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -173,17 +214,190 @@ namespace Ayatta.Storage
                     catch (System.Exception)
                     {
                         tran.Rollback();
-                        return 0;
+                        return 0; ;
                     }
                 }
             }
         }
+        public bool ProdItemUpdate(Prod.Item o,int[] deletedIds)
+        {
+            using (var conn = StoreConn)
+            {
+                conn.Open();
+                using (var tran = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        var cmd = SqlBuilder.Update("Item")
 
+                        .Column("SpuId", o.SpuId)
+                        //.Column("UserId", o.UserId)
+                        .Column("CatgId", o.CatgId)
+                        .Column("CatgRId", o.CatgRId)
+                        .Column("CatgMId", o.CatgMId)
+                        .Column("Code", o.Code)
+                        .Column("Name", o.Name)
+                        .Column("Title", o.Title)
+                        .Column("Stock", o.Stock)
+                        .Column("Price", o.Price)
+                        .Column("AppPrice", o.AppPrice)
+                        .Column("RetailPrice", o.RetailPrice)
+                        .Column("Barcode", o.Barcode)
+                        .Column("BrandId", o.BrandId)
+                        .Column("BrandName", o.BrandName)
+                        .Column("Keyword", o.Keyword)
+                        .Column("PropId", o.PropId)
+                        .Column("PropStr", o.PropStr)
+                        .Column("PropAlias", o.PropAlias)
+                        .Column("InputId", o.InputId)
+                        .Column("InputStr", o.InputStr)
+                        .Column("Summary", o.Summary)
+                        .Column("Picture", o.Picture)
+                        .Column("ItemImgStr", o.ItemImgStr)
+                        .Column("PropImgStr", o.PropImgStr)
+                        .Column("Width", o.Width)
+                        .Column("Depth", o.Depth)
+                        .Column("Height", o.Height)
+                        .Column("Weight", o.Weight)
+                        .Column("Location", o.Location)
+                        .Column("IsBonded", o.IsBonded)
+                        .Column("IsOversea", o.IsOversea)
+                        .Column("IsTiming", o.IsTiming)
+                        .Column("IsVirtual", o.IsVirtual)
+                        .Column("IsAutoFill", o.IsAutoFill)
+                        .Column("SupportCod", o.SupportCod)
+                        .Column("FreePostage", o.FreePostage)
+                        .Column("PostageTplId", o.PostageTplId)
+                        .Column("SubStock", o.SubStock)
+                        .Column("Showcase", o.Showcase)
+                        .Column("OnlineOn", o.OnlineOn)
+                        .Column("OfflineOn", o.OfflineOn)
+                        .Column("RewardRate", o.RewardRate)
+                        .Column("HasInvoice", o.HasInvoice)
+                        .Column("HasWarranty", o.HasWarranty)
+                        .Column("HasGuarantee", o.HasGuarantee)
+                        //.Column("SaleCount", o.SaleCount)
+                        //.Column("CollectCount", o.CollectCount)
+                        //.Column("ConsultCount", o.ConsultCount)
+                        //.Column("CommentCount", o.CommentCount)
+                        .Column("Status", o.Status)
+                        //.Column("CreatedOn", o.CreatedOn)
+                        .Column("ModifiedBy", o.ModifiedBy)
+                        .Column("ModifiedOn", o.ModifiedOn)
+                        .Where("Id=@id", new { o.Id })
+                        .ToCommand(tran);
+
+                        var status =conn.Execute(cmd)>0;
+
+                        if (status)
+                        {
+                            cmd = SqlBuilder.Update("ItemDesc")
+                            //.Column("Id", id)
+                            .Column("Detail", o.Desc.Detail)
+                            .Column("Useage", o.Desc.Detail)
+                            .Column("Photo", o.Desc.Detail)
+                            .Column("Story", o.Desc.Detail)
+                            .Column("Notice", o.Desc.Detail)
+                            //.Column("CreatedOn", o.Desc.CreatedOn)
+                            .Column("ModifiedBy", o.Desc.ModifiedBy)
+                            .Column("ModifiedOn", o.Desc.ModifiedOn)
+                            .Where("Id=@id", new { o.Id })
+                            .ToCommand(tran);
+                            status = conn.Execute(cmd) > 0;
+
+                            if (status && o.Skus.Any())
+                            {
+                                foreach (var sku in o.Skus.Where(x => x.Id==0))
+                                {
+                                    cmd = SqlBuilder.Insert("Sku")
+
+                                    .Column("SpuId", sku.SpuId)
+                                    .Column("ItemId", o.Id)
+                                    .Column("UserId", o.UserId)
+                                    .Column("CatgId", sku.CatgId)
+                                    .Column("CatgRId", sku.CatgRId)
+                                    .Column("CatgMId", sku.CatgMId)
+                                    .Column("Code", sku.Code)
+                                    .Column("Barcode", sku.Barcode)
+                                    .Column("BrandId", sku.BrandId)
+                                    .Column("Stock", sku.Stock)
+                                    .Column("Price", sku.Price)
+                                    .Column("AppPrice", sku.AppPrice)
+                                    .Column("PropId", sku.PropId)
+                                    .Column("PropStr", sku.PropStr)
+                                    .Column("SaleCount", sku.SaleCount)
+                                    .Column("Status", sku.Status)
+                                    .Column("CreatedOn", sku.CreatedOn)
+                                    .Column("ModifiedBy", sku.ModifiedBy)
+                                    .Column("ModifiedOn", sku.ModifiedOn)
+                                    .ToCommand(false, tran);
+
+                                    status = conn.Execute(cmd) > 0;
+                                    
+                                    if (!status)
+                                    {
+                                        break;
+                                    }
+                                }
+                                foreach (var sku in o.Skus.Where(x => x.Id>0))
+                                {
+                                    cmd = SqlBuilder.Update("Sku")
+
+                                    .Column("SpuId", sku.SpuId)
+                                    //.Column("ItemId", o.Id)
+                                    //.Column("UserId", o.UserId)
+                                    .Column("CatgId", sku.CatgId)
+                                    .Column("CatgRId", sku.CatgRId)
+                                    .Column("CatgMId", sku.CatgMId)
+                                    .Column("Code", sku.Code)
+                                    .Column("Barcode", sku.Barcode)
+                                    .Column("BrandId", sku.BrandId)
+                                    .Column("Stock", sku.Stock)
+                                    .Column("Price", sku.Price)
+                                    .Column("AppPrice", sku.AppPrice)
+                                    .Column("PropId", sku.PropId)
+                                    .Column("PropStr", sku.PropStr)
+                                    .Column("SaleCount", sku.SaleCount)
+                                    .Column("Status", sku.Status)
+                                    //.Column("CreatedOn", sku.CreatedOn)
+                                    .Column("ModifiedBy", sku.ModifiedBy)
+                                    .Column("ModifiedOn", sku.ModifiedOn)
+                                    .Where("Id=@Id", new {sku.Id })
+                                    .ToCommand(tran);
+
+                                    conn.Execute(cmd) ;
+                                } 
+                            }
+                            cmd = SqlBuilder.Raw("update Sku set stock=0,status=2 where id in @deletedIds", new { deletedIds })
+                            .ToCommand(tran);
+                            conn.Execute(cmd);
+                        }
+                        if (status)
+                        {
+                            tran.Commit();
+                            return true;
+                        }
+                        else
+                        {
+                            tran.Rollback();
+                            return false;
+                        }
+
+                    }
+                    catch (System.Exception e)
+                    {
+                        tran.Rollback();
+                        throw e;
+                        //return false ;                        
+                    }
+                }
+            }
+        }
         public Prod.Mini ProdMiniGet(int id)
         {
 
-            var sql = @"select id,spuid,userid,catgid,catgrid,code,name,title,stock,price,appprice,retailprice,barcode,brandid,brandname,keyword,propid,propstr,inputid,inputstr,picture,ItemImgStr,PropImgStr,status from item where id=@id;
-            select id,code,stock,price,propstr,appprice,propid,propstr,status from sku where itemid=@id;";
+            var sql = @"select id,spuid,userid,catgid,catgrid,code,name,title,stock,price,appprice,retailprice,barcode,brandid,brandname,keyword,propid,propstr,inputid,inputstr,summary,picture,ItemImgStr,PropImgStr,status from item where id=@id;
+            select id,code,barcode,stock,price,propstr,appprice,propid,propstr,status from sku where itemid=@id;";
             var cmd = SqlBuilder.Raw(sql, new { id }).ToCommand();
             using (var reader = StoreConn.QueryMultiple(cmd))
             {
@@ -227,6 +441,7 @@ namespace Ayatta.Storage
                                 cmd = SqlBuilder
                                 .Update("sku")
                                 .Column("Code", sku.Code)
+                                .Column("Barcode", sku.Barcode)
                                 .Column("Stock", sku.Stock)
                                 .Column("Price", sku.Price)
                                 .Column("AppPrice", o.AppPrice)

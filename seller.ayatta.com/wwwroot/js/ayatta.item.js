@@ -1,32 +1,42 @@
-$.package('ayatta.item', function () {
-    var props = [];//子属性
-    var dynamic = {};//选中的销售属性值
-    var saleProps = [];//销售属性
-    var propImgCache = {};//保存颜色图片
-    var skuDataCache = {};//保存用户输入的sku价格数据信息
+$.package('ayatta.item', function() {
+    var props = []; //子属性
+    var dynamic = {}; //选中的销售属性值
+    var saleProps = []; //销售属性
+    var propImgCache = {}; //保存颜色图片
+    var skuDataCache = {}; //保存用户输入的sku价格数据信息
 
-    this.bind = function (catgId, data) {
+    this.bind = function(catgId, data) {
         propImgCache = data.PropImgs || {};
-        for (var i = 0; i < data.Skus.length; i++) {
-            var o = data.Skus[i];
-            skuDataCache[o.PropId] = {
-                code: o.Code,
-                stock: o.Stock,
-                price: o.Price,
-                appPrice: o.AppPrice
-            };
+        if (data.Skus && data.Skus.length > 0) {
+            for (var i = 0; i < data.Skus.length; i++) {
+                var o = data.Skus[i];
+                //状态不为删除
+                if (o.Status != 2) {
+                    skuDataCache[o.PropId] = {
+                        code: o.Code || '',
+                        stock: o.Stock || 0,
+                        price: o.Price || 0,
+                        appPrice: o.AppPrice || 0,
+                        barcode: o.Barcode || ''
+                    };
+                }
+            }
         }
 
-        $.getJSON('/global/catg/' + catgId, function (r) {
+        $.getJSON('/global/catg/' + catgId, function(r) {
             var propHtml = [];
             var keyPropHtml = [];
             var salePropHtml = [];
             var len = r.Props.length;
-            r.Props = r.Props.sort(function (a, b) { return a.Priority > b.Priority ? 1 : -1; });
+            r.Props = r.Props.sort(function(a, b) {
+                return a.Priority > b.Priority ? 1 : -1;
+            });
             for (var i = 0; i < len; i++) {
                 var p = r.Props[i];
                 if (p.ParentPid == 0 && p.Values) {
-                    p.Values = p.Values.sort(function (a, b) { return a.Priority > b.Priority ? 1 : -1; });
+                    p.Values = p.Values.sort(function(a, b) {
+                        return a.Priority > b.Priority ? 1 : -1;
+                    });
                     if (p.IsKeyProp == true) {
                         keyPropHtml.push('<div>');
                         keyPropHtml.push(propToHtml(p, data));
@@ -51,7 +61,7 @@ $.package('ayatta.item', function () {
 
             $('select').selectpicker();
 
-            $('#desc').summernote({
+            $('.html-editor').summernote({
                 height: 400,
                 lang: 'zh-CN'
             });
@@ -61,7 +71,7 @@ $.package('ayatta.item', function () {
 
 
     //hack selectpicker 无法调用 ayatta.item.getChildren
-    this.getChildProp = function (obj, id) {
+    this.getChildProp = function(obj, id) {
 
         var container = $("#container-prop-" + id);
         container.nextAll().remove();
@@ -80,24 +90,26 @@ $.package('ayatta.item', function () {
         }
 
         if (child != null) {
-            var html = propToHtml(child);
+            var html = propToHtml(child, {
+                Props: []
+            });
             container.parent().append(html);
             $('#prop-' + child.Id).selectpicker();
         }
     };
 
-    this.checkBoxOnClick = function (obj) {
+    this.checkBoxOnClick = function(obj) {
         var key = obj.value;
         if (obj.checked) {
             var data = $(obj).data();
             dynamic[key] = data
         } else {
-            delete (dynamic[key])
+            delete(dynamic[key])
         }
         setSkuHtml();
     };
 
-    this.nameOnKeyup = function (obj) {
+    this.nameOnKeyup = function(obj) {
         var val = obj.value = obj.value.replace(/[^\u4e00-\u9fa5\A-Za-z0-9\-\/\.\'\s]/g, '')
             .replace(/\-+/g, '-').replace(/\/+/g, '/').replace(/\.+/g, '.').replace(/\'+/g, '\'').replace(/\s+/g, ' ')
             .replace(/^[\-\/\.\']/g, '').replace(/(^s*)|(s*$)/g, "");
@@ -111,7 +123,7 @@ $.package('ayatta.item', function () {
         $('#item-name-len').html('还可以输入' + x + '字节');
     }
 
-    this.nameOnBlur = function (obj) {
+    this.nameOnBlur = function(obj) {
         var val = obj.value = obj.value.replace(/[\-\/\.\']$/g, '');
 
         var len = val.Length("gbk");
@@ -123,35 +135,36 @@ $.package('ayatta.item', function () {
         $('#item-name-len').html('还可以输入' + x + '字节');
     }
 
-    this.priceOnKeyup = function (obj) {
+    this.priceOnKeyup = function(obj) {
         obj.value = obj.value.replace(/[^0-9\.]/g, '');
     }
 
-    this.priceOnBlur = function (obj) {
+    this.priceOnBlur = function(obj) {
         var val = obj.value.replace(/[^0-9\.]/g, '').replace(/^[\.]/g, '').replace(/[\.*]$/g, '');
 
         var reg = /^-?\d+(\.\d{1,2})?$/
         if (!reg.test(val)) {
             obj.value = val = val == '' ? 0 : parseFloat(val);
-        }
-        else {
+        } else {
             obj.value = val;
         }
 
         var name = obj.name || '';
         if (name == 'item.price') {
-            var price = $(obj).data("price") || { min: 0, max: 999999999 };
+            var price = $(obj).data("price") || {
+                min: 0,
+                max: 999999999
+            };
 
             if (val < price.min || val > price.max) {
                 obj.value = price.min;
             }
-        }
-        else {
+        } else {
             var prices = [];
 
             var array = $('.sku-price');
 
-            $.each(array, function (i, o) {
+            $.each(array, function(i, o) {
                 var price = $(o).val();
                 if (reg.test(price)) {
                     prices.push(price);
@@ -159,21 +172,70 @@ $.package('ayatta.item', function () {
             });
             var min = lodash.min(prices);
             var max = lodash.max(prices);
-            var data = { min: min, max: max };
-
+            var data = {
+                min: min,
+                max: max
+            };
+            var extraData = $(obj).data();
+            var skuKey = extraData.skuKey;
+            console.log(skuDataCache[skuKey]);
+            skuDataCache[skuKey].price = obj.value;
             $("input[name='item.price']").val(min).data("price", data);
         }
-        var extraData = $(obj).data();
-        var skuKey = extraData.skuKey;
-        skuDataCache[skuKey].price = obj.value;
+
+    }
+
+    this.appPriceOnBlur = function(obj) {
+        var val = obj.value.replace(/[^0-9\.]/g, '').replace(/^[\.]/g, '').replace(/[\.*]$/g, '');
+
+        var reg = /^-?\d+(\.\d{1,2})?$/
+        if (!reg.test(val)) {
+            obj.value = val = val == '' ? 0 : parseFloat(val);
+        } else {
+            obj.value = val;
+        }
+
+        var name = obj.name || '';
+        if (name == 'item.appPrice') {
+            var price = $(obj).data("appPrice") || {
+                min: 0,
+                max: 999999999
+            };
+
+            if (val < price.min || val > price.max) {
+                obj.value = price.min;
+            }
+        } else {
+            var prices = [];
+
+            var array = $('.sku-app-price');
+
+            $.each(array, function(i, o) {
+                var price = $(o).val();
+                if (reg.test(price)) {
+                    prices.push(price);
+                }
+            });
+            var min = lodash.min(prices);
+            var max = lodash.max(prices);
+            var data = {
+                min: min,
+                max: max
+            };
+            var extraData = $(obj).data();
+            var skuKey = extraData.skuKey;
+            skuDataCache[skuKey].appPrice = obj.value;
+            $("input[name='item.appPrice']").val(min).data("appPrice", data);
+        }
+
     }
 
 
-    this.stockOnKeyup = function (obj) {
+    this.stockOnKeyup = function(obj) {
         obj.value = obj.value.replace(/\D/g, '');
     }
 
-    this.stockOnBlur = function (obj) {
+    this.stockOnBlur = function(obj) {
         var val = obj.value = obj.value.replace(/\D/g, '');
         obj.value = val = val == '' ? 0 : parseInt(val);
 
@@ -183,20 +245,26 @@ $.package('ayatta.item', function () {
             var sum = 0;
             var array = $('.sku-stock');
 
-            $.each(array, function (i, o) {
+            $.each(array, function(i, o) {
                 var stock = $(o).val();
                 if (stock != '') {
                     sum += parseInt(stock);
                 }
             });
+            var extraData = $(obj).data();
+            var skuKey = extraData.skuKey;
+            skuDataCache[skuKey].stock = obj.value;
             $("input[name='item.stock']").val(sum);
         }
-        var extraData = $(obj).data();
-        var skuKey = extraData.skuKey;
-        skuDataCache[skuKey].stock = obj.value;
+
     }
 
-    this.imageUploadCallback = function (result) {
+
+    this.codeOnKeyup = function(obj) {
+        obj.value = obj.value.replace(/[^A-Aa-z0-9]/g, '');
+    }
+
+    this.imageUploadCallback = function(result) {
         if (result.Status == true) {
             if (result.Extra)
                 console.log(result);
@@ -208,7 +276,7 @@ $.package('ayatta.item', function () {
         }
     };
 
-    this.imageUpload = function (obj, param) {
+    this.imageUpload = function(obj, param) {
         var form = document.getElementById('form-upload');
 
         var html = $.format('<span>选择图片</span><input type="file" name="image" class="input-file" onchange="ayatta.item.imageUpload(this,\'{0}\')" />', param);
@@ -219,22 +287,22 @@ $.package('ayatta.item', function () {
     };
 
 
-    this.submitForm = function (obj) {
+    this.submitForm = function(obj) {
         var form = obj.form;
         var action = form.action;
-        var summary = $('#summary').summernote('code');
-        $("#summary").val(summary);
+        //var summary = $('#summary').summernote('code');
+        //$("#summary").val(summary);
         var param = $(form).serialize();
         $(obj).button('loading');
-        $.post(action, param, function (result) {
+        $.post(action, param, function(result) {
             //console.log(result);
             if (result.Status) {
                 $(obj).button('default');
                 //$('#result-message').removeClass('text-danger').addClass('text-success').html('添加商品成功！');
             } else {
                 var target = result.Data;
-                var targets = ["code", "name", "title", "price", "stock", "desc"];
-                $.each(targets, function (i, n) {
+                var targets = ["code", "name", "title", "price", "stock", "summary"];
+                $.each(targets, function(i, n) {
                     $("#form-for-" + n).removeClass('has-error');
                 });
                 var control = "#form-for-" + target;
@@ -279,7 +347,13 @@ $.package('ayatta.item', function () {
                                 if (k.PId == p.Id && k.VId == v.Id) {
                                     checked = 'checked="checked"';
                                     if (p.IsSaleProp == true) {
-                                        dynamic[v.Id] = { pid: p.Id, vid: v.Id, pname: p.Name, vname: v.Name, color: p.IsColorProp };
+                                        dynamic[v.Id] = {
+                                            pid: p.Id,
+                                            vid: v.Id,
+                                            pname: p.Name,
+                                            vname: v.Name,
+                                            color: p.IsColorProp
+                                        };
                                     }
                                 }
                             }
@@ -294,8 +368,7 @@ $.package('ayatta.item', function () {
                     }
                     html.push('</dd></dl>');
                     return html.join('');
-                }
-                else {
+                } else {
 
                     var html = [];
                     var search = '';
@@ -338,7 +411,9 @@ $.package('ayatta.item', function () {
         for (var k in dynamic) {
             array.push(dynamic[k]);
         }
-        array = array.sort(function (a, b) { return a.pid > b.pid ? 1 : -1; });
+        array = array.sort(function(a, b) {
+            return a.pid > b.pid ? 1 : -1;
+        });
 
         var keys = [];
         var names = [];
@@ -354,11 +429,15 @@ $.package('ayatta.item', function () {
             }
         }
 
-        var group = lodash.groupBy(array, function (n) { return n.pid; });
+        var group = lodash.groupBy(array, function(n) {
+            return n.pid;
+        });
         for (var key in group) {
             var array = [];
             var tmp = group[key];
-            lodash.forEach(tmp, function (o) { array.push(o.pid + ":" + o.vid) });
+            lodash.forEach(tmp, function(o) {
+                array.push(o.pid + ":" + o.vid)
+            });
             keys.push(array);
         }
 
@@ -410,12 +489,12 @@ $.package('ayatta.item', function () {
             table.push('<table class="table table-bordered">');
             header.push('<thead><tr>');
             for (var i in names) {
-                header.push('<th>');
+                header.push('<th width="120">');
                 header.push(names[i]);
                 header.push('</th>');
             }
 
-            header.push('<th width="120">数 量<span style="color:red;">*</span></th><th width="120">价 格(Pc Wap)<span style="color:red;">*</span></th><th width="120">价 格(App)<span style="color:red;">*</span></th><th width="120">编 号</th>');
+            header.push('<th>数 量<span style="color:red;">*</span></th><th width="120">价 格(Pc/Wap)<span style="color:red;">*</span></th><th>价 格(App)<span style="color:red;">*</span></th><th>编 号</th><th>条形码</th>');
             header.push('</tr></thead>');
             body.push('<tbody>');
 
@@ -467,37 +546,45 @@ $.package('ayatta.item', function () {
                 var stock = 0;
                 var price = 0;
                 var appPrice = 0;
+                var barcode = '';
                 var skuKey = skus[i];
                 if (skuDataCache[skuKey]) {
                     code = skuDataCache[skuKey].code;
                     stock = skuDataCache[skuKey].stock;
                     price = skuDataCache[skuKey].price;
                     appPrice = skuDataCache[skuKey].appPrice;
+                    barcode = skuDataCache[skuKey].barcode;
                 } else {
                     skuDataCache[skuKey] = {};
                     skuDataCache[skuKey].code = code;
                     skuDataCache[skuKey].stock = stock;
                     skuDataCache[skuKey].price = price;
                     skuDataCache[skuKey].appPrice = appPrice;
+                    skuDataCache[skuKey].barcode = barcode;
                 }
                 body.push('<td>');
-                var stockInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.stock.' + skuKey + '" value="' + stock + '" maxlength="6" class="form-control input-sm input-mini sku-stock" onkeyup="ayatta.item.stockOnKeyup(this);" onblur="ayatta.item.stockOnBlur(this);"/>';
+                var stockInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.stock.' + skuKey + '" value="' + stock + '" maxlength="6" class="form-control input-sm sku-stock" onkeyup="ayatta.item.stockOnKeyup(this);" onblur="ayatta.item.stockOnBlur(this);"/>';
                 body.push(stockInput);
                 body.push('</td>');
 
                 body.push('<td>');
-                var priceInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.price.' + skuKey + '" value="' + price + '" maxlength="9" class="form-control input-small sku-price" onkeyup="ayatta.item.priceOnKeyup(this);" onblur="ayatta.item.priceOnBlur(this);" />';
+                var priceInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.price.' + skuKey + '" value="' + price + '" maxlength="9" class="form-control input-sm sku-price" onkeyup="ayatta.item.priceOnKeyup(this);" onblur="ayatta.item.priceOnBlur(this);" />';
                 body.push(priceInput);
                 body.push('</td>');
 
                 body.push('<td>');
-                var appPriceInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.appPrice.' + skuKey + '" value="' + appPrice + '" maxlength="9" class="form-control input-small sku-app-price" onkeyup="ayatta.item.priceOnKeyup(this);" onblur="ayatta.item.priceOnBlur(this);" />';
+                var appPriceInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.appPrice.' + skuKey + '" value="' + appPrice + '" maxlength="9" class="form-control input-sm sku-app-price" onkeyup="ayatta.item.priceOnKeyup(this);" onblur="ayatta.item.appPriceOnBlur(this);" />';
                 body.push(appPriceInput);
                 body.push('</td>');
 
                 body.push('<td>');
-                var codeInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.code.' + skuKey + '" value="' + code + '" maxlength="9" class="form-control input-small sku-code" />';
+                var codeInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.code.' + skuKey + '" value="' + code + '" maxlength="9" class="form-control input-sm sku-code" onkeyup="ayatta.item.codeOnKeyup(this,0);"/>';
                 body.push(codeInput);
+                body.push('</td>');
+
+                body.push('<td>');
+                var barcodeInput = '<input type="text" data-sku-key="' + skuKey + '" name="sku.barcode.' + skuKey + '" value="' + barcode + '" maxlength="12" class="form-control input-sm sku-barcode" onkeyup="ayatta.item.codeOnKeyup(this,1);" />';
+                body.push(barcodeInput);
                 body.push('</td>');
 
                 body.push('</tr>');

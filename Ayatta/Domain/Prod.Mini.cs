@@ -135,29 +135,35 @@ namespace Ayatta.Domain
             public string InputStr { get; set; }
 
             ///<summary>
+            /// 商品概要
+            ///<summary>
+            [ProtoMember(23)]
+            public string Summary { get; set; }
+
+            ///<summary>
             /// 商品主图片地址
             ///<summary>
-            [ProtoMember(28)]
+            [ProtoMember(24)]
             public string Picture { get; set; }
 
             ///<summary>
             /// 商品图片列表(包括主图)
             ///<summary>
             [JsonIgnore]
-            [ProtoMember(29)]
+            [ProtoMember(25)]
             public string ItemImgStr { get; set; }
 
             ///<summary>
             /// 商品属性图片列表
             ///<summary>
             [JsonIgnore]
-            [ProtoMember(30)]
+            [ProtoMember(26)]
             public string PropImgStr { get; set; }
 
             ///<summary>
             /// 状态 0为可用
             ///<summary>
-            [ProtoMember(46)]
+            [ProtoMember(52)]
             public Status Status { get; set; }
 
             /// <summary>
@@ -250,40 +256,46 @@ namespace Ayatta.Domain
                 public string Code { get; set; }
 
                 ///<summary>
+                /// 商品条形码
+                ///<summary>
+                [ProtoMember(2)]
+                public string Barcode { get; set; }
+
+                ///<summary>
                 /// 商品库存数量
                 ///<summary>
-                [ProtoMember(3)]
+                [ProtoMember(4)]
                 public int Stock { get; set; }
 
                 ///<summary>
                 /// 商品价格
                 ///<summary>
-                [ProtoMember(4)]
+                [ProtoMember(5)]
                 public decimal Price { get; set; }
 
                 ///<summary>
                 /// Sku app 价格
                 ///<summary>
-                [ProtoMember(5)]
+                [ProtoMember(6)]
                 public decimal AppPrice { get; set; }
 
                 ///<summary>
                 /// 商品属性Id 格式：pid:vid;pid:vid
                 ///<summary>
-                [ProtoMember(6)]
+                [ProtoMember(7)]
                 public string PropId { get; set; }
 
                 ///<summary>
                 /// 商品属性值 格式 pid:vid:pname:vname;pid:vid:pname:vname
                 ///<summary>
                 [JsonIgnore]
-                [ProtoMember(7)]
+                [ProtoMember(8)]
                 public string PropStr { get; set; }
 
                 ///<summary>
                 /// 状态 0为可用
                 ///<summary>
-                [ProtoMember(8)]
+                [ProtoMember(9)]
                 public Status Status { get; set; }
 
                 [JsonIgnore]

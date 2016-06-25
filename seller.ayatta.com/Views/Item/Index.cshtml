@@ -118,7 +118,10 @@
                                 名 称
                             </th>
                             <th>
-                                单 价(元)
+                                销售价(元)
+                            </th>
+                             <th>
+                                市场价(元)
                             </th>
                             <th>
                                 库 存
@@ -165,13 +168,13 @@
 
                             </td>
                             <td>
-                                <span id="item-price-@(item.Id)">
-                                            @(item.Price.ToString("N"))</span>
-
+                                <span id="item-price-@(item.Id)">@(item.Price.ToString("N"))</span>
+                            </td>
+                             <td>
+                                <span id="item-retailprice-@(item.Id)">@(item.RetailPrice.ToString("N"))</span>
                             </td>
                             <td>
-                                <span id="item-quantity-@(item.Id)">
-                                            @item.Stock</span>
+                                <span id="item-quantity-@(item.Id)">@item.Stock</span>
                             </td>
                             <td>
                                 @item.CollectCount
@@ -193,6 +196,7 @@
 
                             </td>
                             <td>
+                                <a title="编辑" href="~/item/@(item.Id)">编 辑</a>
                                 <a title="生成拍品" href="/auction/create/@(item.Id)" class="list-item-extra-action" target="_blank">
                                     <i class="fa fa-gavel"></i>&nbsp;生成拍品</a><br />
 

@@ -58,17 +58,25 @@
                         <dt>商品编号</dt>
                         <dd id="form-for-code">
                             <div class="fg-line ">
-                                <input type="text" name="item.code" value="@(Model.Data.Code)" class="form-control" />
+                                <input type="text" name="item.code" value="@(Model.Data.Code)" class="form-control" maxlength="8" onkeyup="ayatta.item.codeOnKeyup(this,0);"/>
                             </div>
                             <p class="help-block">商品编号（20个字符以内）</p>
+                        </dd>
+                    </dl>
+                     <dl>
+                        <dt>商品条形码</dt>
+                        <dd id="form-for-barcode">
+                            <div class="fg-line ">
+                                <input type="text" name="item.barcode" value="@(Model.Data.Barcode)" class="form-control" maxlength="12" onkeyup="ayatta.item.codeOnKeyup(this,1);" />
+                            </div>
+                            <p class="help-block">商品条形码（20个字符以内）</p>
                         </dd>
                     </dl>
                     <dl>
                         <dt>商品名称</dt>
                         <dd id="form-for-name">
                             <div class="fg-line">
-                                <input type="text" name="item.name" value="@(Model.Data.Name)" class="form-control" onkeyup="ayatta.item.nameOnKeyup(this);"
-                                    onblur="ayatta.item.nameOnBlur(this);" />
+                                <input type="text" name="item.name" value="@(Model.Data.Name)" class="form-control" onkeyup="ayatta.item.nameOnKeyup(this);" onblur="ayatta.item.nameOnBlur(this);" />
                             </div>
                             <p class="help-block">商品名称（60字节以内,一个中文两字节）<span id="item-name-len"></span></p>
                         </dd>
@@ -77,7 +85,7 @@
                         <dt>商品标题</dt>
                         <dd id="form-for-title">
                             <div class="fg-line">
-                                <input type="text" value="@(Model.Data.Title)" name="item.title" class="form-control" />
+                                <input type="text" value="@(Model.Data.Title)" name="item.title" class="form-control" onkeyup="ayatta.item.nameOnKeyup(this);" onblur="ayatta.item.nameOnBlur(this);"/>
                             </div>
                             <p class="help-block">商品标题（为空或30字以内）</p>
                         </dd>
@@ -116,7 +124,7 @@
                         </dd>
                     </dl>
                     <dl>
-                        <dt>商品价格(PC WAP)</dt>
+                        <dt>商品价格(PC/WAP)</dt>
                         <dd id="form-for-price">
                             <div class="fg-line">
                                 <input type="text" name="item.price" value="@(Model.Data.Price)" class="form-control" maxlength="9" onkeyup="ayatta.item.priceOnKeyup(this);"
@@ -130,7 +138,7 @@
                         <dd id="form-for-price">
                             <div class="fg-line">
                                 <input type="text" name="item.appPrice" value="@(Model.Data.AppPrice)" class="form-control" maxlength="9" onkeyup="ayatta.item.priceOnKeyup(this);"
-                                    onblur="ayatta.item.priceOnBlur(this);" />
+                                    onblur="ayatta.item.appPriceOnBlur(this);" />
                             </div>
                             <p class="help-block">价格应在销售属性表中所填最高与最低价格范围区间内，以元为单位，精确到小数点后两位（取值范围：0-99999999）</p>
                         </dd>
@@ -143,7 +151,6 @@
 
                             <div class="row">
                                 @foreach(var img in Model.Data.Imgs){
-
                                 <div class="col-sm-4 col-md-2">
                                     <div class="thumbnail">
                                         <img src="http://img.taobaocdn.com/imgextra/T15iCxXoxDXXb1upjX_100x100.jpg" alt="">
@@ -182,11 +189,48 @@
                         </dd>
                     </dl>
                     <dl>
-                        <dt class="m-b-15">商品描述</dt>
+                        <dt class="m-b-15">商品摘要</dt>
                         <dd id="form-for-summary">
-                            <textarea id="summary" name="item.summary" class="html-editor"></textarea>
-                            <p class="help-block">商品描述（5至25000个字）</p>
+                            <div class="fg-line">
+                                <textarea id="summary" class="form-control" rows="4" name="item.summary">@(Model.Data.Summary)</textarea>
+                            </div>
+                            <p class="help-block">商品摘要（5至200个字）</p>                                              
                         </dd>
+                    </dl>
+                    <dl>
+                        <dt>商品描述</dt>
+                        <dd class="p-10">
+                            
+                            <div role="tabpanel">
+                                <ul class="tab-nav" role="tablist">
+                                    <li class="active"><a href="#item-detail" aria-controls="item-detail" role="tab" data-toggle="tab">商品详情</a></li>
+                                    <li><a href="#item-useage" aria-controls="item-useage" role="tab" data-toggle="tab">使用方法</a></li>
+                                    <li><a href="#item-photo" aria-controls="item-photo" role="tab" data-toggle="tab">产品实拍</a></li>
+                                    <li><a href="#item-story" aria-controls="item-story" role="tab" data-toggle="tab">品牌故事</a></li>
+                                    <li><a href="#item-notice" aria-controls="item-notice" role="tab" data-toggle="tab">使用须知</a></li>
+                                </ul>
+                              
+                                <div class="tab-content">
+                                    <div role="tabpanel" class="tab-pane active" id="item-detail">
+                                        <textarea name="item.desc.detail" class="html-editor">@(Model.ItemDesc.Detail)</textarea> 
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="item-useage">
+                                        <textarea name="item.desc.useage" class="html-editor">@(Model.ItemDesc.Useage)</textarea> 
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="item-photo">
+                                        <textarea name="item.desc.photo" class="html-editor">@(Model.ItemDesc.Photo)</textarea> 
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="item-story">
+                                        <textarea name="item.desc.story" class="html-editor">@(Model.ItemDesc.Story)</textarea> 
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="item-notice">
+                                        <textarea name="item.desc.notice" class="html-editor">@(Model.ItemDesc.Notice)</textarea> 
+                                    </div>
+                                </div>
+                            </div>
+
+                        </dd>
+
                     </dl>
                     <dl>
                         <dt>库存计数</dt>
@@ -317,11 +361,15 @@
         filter: alpha(opacity=0);
     }
 </style>
-} @section js{
+} 
+
+@section js{
 <script src="@(WebSite.Static)/js/summernote.min.js"></script>
 <script src="/js/ayatta.item.js"></script>
 
-} @section jsOmega{
+} 
+
+@section jsOmega{
 <script>
     //document.domain = 'ayatta.com';   
     var data=@Html.Raw(Html.Json(Model.Data));

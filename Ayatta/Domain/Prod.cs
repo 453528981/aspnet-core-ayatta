@@ -8,7 +8,6 @@
             public string PName;
             public int VId;
             public string VName;
-            //public int ParentPId;     
             public string Extra;
         }
 
@@ -23,14 +22,24 @@
             Online = 0,
 
             /// <summary>
-            /// 库中
+            /// 下线库中
             /// </summary>
             Offline = 1,
 
             /// <summary>
-            /// 删除
+            /// 已删除
             /// </summary>
-            Deleted = 2
+            Deleted = 2,
+
+            /// <summary>
+            /// 隔离的 违规 违反广告法 包含敏感词等
+            /// </summary>
+            Isolated = 3,
+
+            /// <summary>
+            /// 禁用的 被品牌商投诉侵权等
+            /// </summary>
+            Forbidden = 4
         }
 
     }

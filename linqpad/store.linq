@@ -1,16 +1,16 @@
 <Query Kind="SQL">
   <Connection>
-    <ID>fef888ea-15b7-47c6-9238-a0deb1b806a7</ID>
+    <ID>577999c1-607c-4e5b-8d77-61164c3b7c34</ID>
     <Persist>true</Persist>
     <Driver Assembly="IQDriver" PublicKeyToken="5b59726538a49684">IQDriver.IQDriver</Driver>
     <Provider>Devart.Data.MySql</Provider>
-    <CustomCxString>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAasoE5ACSEE6Rts5OBZSDZQAAAAACAAAAAAAQZgAAAAEAACAAAAAftQNo14Qo71gMV+70G2Qpoem1Xy0eSRZY+gHQ6ZNyjQAAAAAOgAAAAAIAACAAAAAUtgkLcE5PXsKYqQCWucb4NoRqU7s3jvv1wHmSb93EAVAAAAAYGGdbkR1tQ/Uyk3pTASXgcFKYchnhws8lWIK0BxHzIOCKnCDmbABrpF+CCtxLAuGJYEwlXhQACwNDw7DCPTOfPBeEl22j8aNVVbSagO+6Y0AAAAD10P9DkVD60KA+EQ0J6ICnFjcxWyv9oo8fnoidGQuMem4r5txCCujVKxCdLQ3fE3mAtSbkFGtDZrfFfpQeODz+</CustomCxString>
+    <CustomCxString>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAgeh4eyutP0SFuhsW6pKTLAAAAAACAAAAAAAQZgAAAAEAACAAAADSIc2H5z3y4UnDeyUyhUvRfArOqNac1JrO2wyWEz9J+gAAAAAOgAAAAAIAACAAAABaWBfD0wRSfSnQoUvxswiiwI1BSKGN3FLtZwIA8kYfFUAAAACkv5vwIJMUPkIawlx7HeKUEJPIgsb7w+ltIjiq5K25KVCC9yRuzBnle3pVxyVTyuCC2FnvQZMC6Jq1kquglAwkQAAAAOT84D2BL+MI3grgEvUiYJdWL7dQ+i7+3xD1mTGOSWXM9zNrWnblrCRbRFjADGUk9eFk+r1PHXehA2qOG+Y74ME=</CustomCxString>
     <Server>127.0.0.1</Server>
-    <Database>keyword</Database>
-    <NoPluralization>true</NoPluralization>
-    <NoCapitalization>true</NoCapitalization>
+    <Database>store</Database>
     <UserName>root</UserName>
-    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAgeh4eyutP0SFuhsW6pKTLAAAAAACAAAAAAAQZgAAAAEAACAAAAAgaTcRNdhriXdroFz3e0hv72DZ0V2gLDzFLJ6UUOMYUAAAAAAOgAAAAAIAACAAAADSXQcm0DOrcYcO8aB4lFJmqTiFRnpkzuL0VX+og4gVCxAAAABhwTV+kk/af8270IBpDOzrQAAAALsJKf3PNd//bahw6xVo1e/pZXSpBVEaeJ60h6eGJ01OHhA5oH0R9dEdmxhyfnrOLkQ/ZnczH6538eiSBxkaYeA=</Password>
+    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAgeh4eyutP0SFuhsW6pKTLAAAAAACAAAAAAAQZgAAAAEAACAAAACen6bGoKoESURjncTcLsqqXrRXnv24xHnbqS8tJjEAPwAAAAAOgAAAAAIAACAAAAB32TviFS7qcKwbjMKkDmAfxBpEFFb5UKTqmZdcFh4sBxAAAAA3Bq/1VriiZAKOTbzbI1ZOQAAAAFpHWF61EEHmf8fSaHxlGTw3memNs0g1w4ASh5JHBN9c8Vm/AA8ReNTOmG42MjfbGy2NcyTRMtaqKImJAQK6TbY=</Password>
+    <NoCapitalization>true</NoCapitalization>
+    <NoPluralization>true</NoPluralization>
     <EncryptCustomCxString>true</EncryptCustomCxString>
     <DriverData>
       <StripUnderscores>false</StripUnderscores>
@@ -52,19 +52,27 @@ PropStr nvarchar(1000) comment '商品属性值 格式 pid:vid:pname:vname;pid:v
 PropAlias nvarchar(500) comment '属性值别名,比如颜色的自定义名称 1627207:28335:草绿;1627207:3232479:深紫',
 InputId nvarchar(500) comment '商品输入属性Id',
 InputStr nvarchar(500) comment '商品输入属性值',
-Width decimal(10,2) default 0 not null comment '宽度',
-Depth decimal(10,2) default 0 not null comment '深度',
-Height decimal(10,2) default 0 not null comment '高度',
-Weight decimal(10,2) default 0 not null comment '重量',
 Summary nvarchar(1000) comment '商品概要',
 Picture nvarchar(500) comment '商品主图片地址',
 ItemImgStr nvarchar(1000) comment '商品图片列表(包括主图)',
 PropImgStr nvarchar(1000) comment '商品属性图片列表',
+Width decimal(10,2) default 0 not null comment '宽度',
+Depth decimal(10,2) default 0 not null comment '深度',
+Height decimal(10,2) default 0 not null comment '高度',
+Weight decimal(10,2) default 0 not null comment '重量',
+Location varchar(4) default '' not null comment '国内商品所在地(城市)Code',
+IsBonded bool default 0 not null comment '是否为保税仓发货',
+IsOversea bool default 0 not null comment '是否为海外直邮',
+IsTiming bool default 0 not null comment '是否定时上架商品',
 IsVirtual bool default 0 not null comment '是否为虚拟物品',
 IsAutoFill bool default 0 not null comment '代充商品类型 可选类型： timecard(点卡软件代充) feecard(话费软件代充)',
-IsTiming bool default 0 not null comment '是否定时上架商品',
+SupportCod bool default 0 not null comment '是否支持货到付款',
+FreePostage bool default 0 not null comment '是否包邮',
+PostageTplId int default 0 not null comment '运费模板Id',
+
 SubStock tinyint default 0 not null comment '0为拍下减库存 1为付款减库存',
 Showcase int default 0 not null comment '橱窗推荐',
+
 OnlineOn datetime not null comment '上架时间',
 OfflineOn datetime not null comment '下架时间',
 RewardRate decimal(2,2) default 0.2 not null comment '积分奖励',
@@ -85,11 +93,11 @@ primary key (Id)
 drop table if exists ItemDesc;
 create table ItemDesc(
 Id int not null,
-Useage text comment '使用方法',
-Notice text comment '使用须知',
-Detail text comment '商品详情',
-AppDetail text comment '商品详情',
-Photograph text comment '产品实拍',
+Detail nvarchar(2000) comment '商品详情',
+Useage nvarchar(2000) comment '使用方法',
+Photo nvarchar(2000) comment '产品实拍',
+Story nvarchar(2000) comment '品牌故事',
+Notice nvarchar(2000) comment '使用须知',
 CreatedOn datetime default current_timestamp  not null comment '创建时间',
 ModifiedBy nvarchar(50) default '' comment '最后一次编辑者',
 ModifiedOn timestamp on update current_timestamp default current_timestamp not null comment '最后一次编辑时间',

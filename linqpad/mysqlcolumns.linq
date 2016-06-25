@@ -1,14 +1,14 @@
 <Query Kind="Program">
   <Connection>
-    <ID>94112c10-a546-4880-9fbb-9d4a73a597b7</ID>
+    <ID>577999c1-607c-4e5b-8d77-61164c3b7c34</ID>
     <Persist>true</Persist>
     <Driver Assembly="IQDriver" PublicKeyToken="5b59726538a49684">IQDriver.IQDriver</Driver>
     <Provider>Devart.Data.MySql</Provider>
-    <CustomCxString>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAasoE5ACSEE6Rts5OBZSDZQAAAAACAAAAAAAQZgAAAAEAACAAAADp043c5/6hXhTB5sg591gMRNC9LPId73TGD8RGAw0rQQAAAAAOgAAAAAIAACAAAAC3RrSmfy0hkjvBLKvGqM0hhMvI0yM/c3UyXf0ggwaSBEAAAADiNmEc8NWbjR6adennRsRr7pyBASahtlOGgKfajVe2mMIyoF1Ww8zSN4353YJckicKFuh5E0MvCVQ5TON7CHrKQAAAACyF6wdM6FRiD1DxpqJ3uPBtfwu6zvANyy8NRdPoFwckHHdTlG/aTHbaFfEOIQSkx/mdPpV6SIE1k/M1+NoEpXM=</CustomCxString>
+    <CustomCxString>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAgeh4eyutP0SFuhsW6pKTLAAAAAACAAAAAAAQZgAAAAEAACAAAADSIc2H5z3y4UnDeyUyhUvRfArOqNac1JrO2wyWEz9J+gAAAAAOgAAAAAIAACAAAABaWBfD0wRSfSnQoUvxswiiwI1BSKGN3FLtZwIA8kYfFUAAAACkv5vwIJMUPkIawlx7HeKUEJPIgsb7w+ltIjiq5K25KVCC9yRuzBnle3pVxyVTyuCC2FnvQZMC6Jq1kquglAwkQAAAAOT84D2BL+MI3grgEvUiYJdWL7dQ+i7+3xD1mTGOSWXM9zNrWnblrCRbRFjADGUk9eFk+r1PHXehA2qOG+Y74ME=</CustomCxString>
     <Server>127.0.0.1</Server>
-    <Database>base</Database>
+    <Database>store</Database>
     <UserName>root</UserName>
-    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAasoE5ACSEE6Rts5OBZSDZQAAAAACAAAAAAAQZgAAAAEAACAAAADj5T9VPa92LlIqxCh4ngiOlxW/wscaWH4Qk52+3V0USQAAAAAOgAAAAAIAACAAAAB84pU06jhv1BYE0513cVL1AjmnkEd5G93FW7b0XDrfRhAAAABeT7ZPNz3A7dbSfINpqqg0QAAAAA5ZaISqOn8cV18xZDYfPe+Aux3wDe0YiApwNHWnR2r7PoWKyDLb9nnWsrjgxDbj/PFMV4t1GFLSmH++6DiMeuQ=</Password>
+    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAgeh4eyutP0SFuhsW6pKTLAAAAAACAAAAAAAQZgAAAAEAACAAAACen6bGoKoESURjncTcLsqqXrRXnv24xHnbqS8tJjEAPwAAAAAOgAAAAAIAACAAAAB32TviFS7qcKwbjMKkDmAfxBpEFFb5UKTqmZdcFh4sBxAAAAA3Bq/1VriiZAKOTbzbI1ZOQAAAAFpHWF61EEHmf8fSaHxlGTw3memNs0g1w4ASh5JHBN9c8Vm/AA8ReNTOmG42MjfbGy2NcyTRMtaqKImJAQK6TbY=</Password>
     <NoCapitalization>true</NoCapitalization>
     <NoPluralization>true</NoPluralization>
     <EncryptCustomCxString>true</EncryptCustomCxString>
@@ -25,7 +25,7 @@
 
 void Main()
 {
-	var t=GetTable("store","Sku");
+	var t=GetTable("store","Item");
 	GetDomain(t).Dump();
 }
 public string GetDomain(Table t)
@@ -34,7 +34,7 @@ public string GetDomain(Table t)
 	var sb=new StringBuilder();
 	sb.AppendLine("///<summary>");
 	sb.AppendLine("/// "+t.Name);
-	sb.AppendLine("///created on "+DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+	sb.AppendLine("/// created on "+DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 	sb.AppendLine("///<summary>");
 	sb.AppendLine("[ProtoContract]");
 	sb.AppendLine("public class "+t.Name+" : IEntity<>");

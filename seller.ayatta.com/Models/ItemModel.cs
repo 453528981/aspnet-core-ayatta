@@ -24,6 +24,8 @@ namespace Ayatta.Web.Models
         public class Item : ViewModel<Prod.Mini>
         {
             public int CatgId { get; set; }
+
+            public Prod.ItemDesc ItemDesc { get; set; }
             public Item(Prod.Mini data) : base(data)
             {
             }
